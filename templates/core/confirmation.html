@@ -1,0 +1,456 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Booking Confirmed | HEALTHBRIDGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family:  "source code pro", Arial, sans-serif;
+        background-color: #f8fbfb;
+        color: #264653;
+    }
+
+    /* --- Success Animation Style --- */
+    .success-badge-container {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .check-circle {
+        width: 80px;
+        height: 80px;
+        background: #2a9d8f;
+        color: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 20px rgba(42, 157, 143, 0.2);
+    }
+
+    .confirmation-title {
+        font-weight: 800;
+        font-size: 2rem;
+        letter-spacing: -1px;
+        color: #000;
+    }
+
+    /* --- Main Receipt Card --- */
+    .receipt-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.04);
+    }
+
+    .receipt-header {
+        background: #000;
+        color: #fff;
+        padding: 25px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .receipt-header h5 {
+        margin: 0;
+        font-weight: bold;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* --- ID Highlight Box --- */
+    .id-display-box {
+        background: #f1f7f6;
+        border: 2px dashed #2a9d8f;
+        padding: 25px;
+        text-align: center;
+        margin-bottom: 40px;
+        border-radius: 12px;
+    }
+
+    .id-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #2a9d8f;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 5px;
+    }
+
+    .id-value {
+        font-family: "source code pro", Arial, sans-serif;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #000;
+        letter-spacing: 2px;
+    }
+
+    /* --- Data Grid --- */
+    .info-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #aaa;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-weight: 700;
+        color: #000;
+        margin-bottom: 25px;
+        font-size: 1rem;
+    }
+
+    /* --- Instruction Alert --- */
+    .protocol-card {
+        background: #fff;
+        border-left: 5px solid #2a9d8f;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+    }
+
+    .protocol-card h6 {
+        font-weight: 800;
+        color: #2a9d8f;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+    }
+
+    /* --- Buttons --- */
+    .btn-custom {
+        padding: 15px 30px;
+        border-radius: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        transition: 0.3s;
+    }
+
+    .btn-print { background: #fff; border: 2px solid #ddd; color: #555; }
+    .btn-print:hover { border-color: #000; color: #000; }
+
+    .btn-dash { background: #000; color: #fff; border: none; }
+    .btn-dash:hover { background: #2a9d8f; }
+
+    /* --- Download Button --- */
+    .btn-download {
+        background: #2a9d8f;
+        color: #fff;
+        border: none;
+    }
+    .btn-download:hover { background: #21867a; color: #fff; }
+    .btn-download:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    @media print {
+        .btn-custom, nav, footer { display: none !important; }
+        .receipt-card { box-shadow: none; border: 1px solid #000; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    
+    <!-- Header -->
+    <div class="success-badge-container">
+        <div class="check-circle">
+            <i class="bi bi-check2"></i>
+        </div>
+        <h2 class="confirmation-title">Booking Confirmed!</h2>
+        <p class="text-muted">Your request has been successfully logged in our system.</p>
+    </div>
+
+    <!-- Main Receipt -->
+    <div class="receipt-card mb-4" id="receipt-card">
+        <div class="receipt-header">
+            <h5>
+                {% if booking_type == 'bed' %}
+                    <i class="bi bi-bed me-2"></i>Bed Allocation Voucher
+                {% else %}
+                    <i class="bi bi-calendar-check me-2"></i>Appointment Confirmation
+                {% endif %}
+            </h5>
+            <span class="small fw-bold opacity-50">Verified & Secured</span>
+        </div>
+
+        <div class="p-4 p-md-5">
+            <!-- Booking ID Area -->
+            <div class="id-display-box">
+                <div class="id-label">Official Reference Number</div>
+                <div class="id-value">
+                    {% if booking_type == 'bed' %}{{ booking.booking_id }}{% else %}{{ booking.appointment_id }}{% endif %}
+                </div>
+                <div class="small text-muted mt-2">Please present this code at the hospital desk</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-label">Medical Facility</div>
+                    <div class="info-value">
+                        {{ booking.hospital.name }}<br>
+                        <span class="small text-muted fw-normal">{{ booking.hospital.area }}, Pune</span>
+                    </div>
+
+                    <div class="info-label">Patient Information</div>
+                    <div class="info-value">
+                        {{ booking.patient_name }}<br>
+                        <span class="small text-muted fw-normal">Age: {{ booking.patient_age }} | {{ booking.patient_gender }}</span>
+                    </div>
+
+                    <div class="info-label">Payment Status</div>
+                    <div class="info-value">
+                        <span class="text-teal"><i class="bi bi-check-circle-fill me-1"></i>{{ booking.payment_status }}</span><br>
+                        <span class="small text-muted fw-bold">Amount: ₹{{ booking.amount_paid }}</span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    {% if booking_type == 'bed' %}
+                        <div class="info-label">Allocation Details</div>
+                        <div class="info-value">
+                            {{ booking.bed_type }} Ward Admission<br>
+                            <span class="small text-muted fw-normal">Date: {{ booking.admission_date }}</span>
+                        </div>
+
+                        <div class="info-label">Clinical Stay</div>
+                        <div class="info-value">Expected Duration: {{ booking.expected_days }} Day(s)</div>
+                    {% else %}
+                        <div class="info-label">Session Details</div>
+                        <div class="info-value">
+                            {% if booking.doctor %}Dr. {{ booking.doctor.name }}{% else %}Dept: {{ booking.department.name }}{% endif %}<br>
+                            <span class="small text-muted fw-normal">{{ booking.appointment_date }} at {{ booking.appointment_time }}</span>
+                        </div>
+
+                        <div class="info-label">Clinical Reason</div>
+                        <div class="info-value small text-muted">{{ booking.reason_for_visit }}</div>
+                    {% endif %}
+
+                    <div class="info-label">Review Status</div>
+                    <div class="info-value">
+                        <span class="badge bg-warning text-dark px-3 py-2" style="font-size: 0.7rem; border-radius: 4px;">
+                            <i class="bi bi-hourglass-split me-1"></i>{{ booking.status|upper }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Important Instructions -->
+    <div class="protocol-card mb-5">
+        <h6><i class="bi bi-info-circle-fill me-2"></i>Arrival Protocol</h6>
+        <ul class="mb-0 small text-muted" style="list-style: none; padding-left: 0;">
+            <li class="mb-2"><i class="bi bi-chevron-right text-teal me-2"></i>Carry a valid photo ID (Aadhaar / PAN) for physical verification.</li>
+            <li class="mb-2"><i class="bi bi-chevron-right text-teal me-2"></i>Bring all previous medical reports and current prescriptions.</li>
+            <li class="mb-2"><i class="bi bi-chevron-right text-teal me-2"></i>Arrive 30 minutes prior to your scheduled time.</li>
+            <li class="mb-0"><i class="bi bi-chevron-right text-teal me-2"></i>Contact <strong>{{ booking.hospital.phone }}</strong> for emergency rescheduling.</li>
+        </ul>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex flex-wrap gap-3 justify-content-center">
+        <button onclick="window.print()" class="btn btn-custom btn-print">
+            <i class="bi bi-printer-fill me-2"></i>Print / Save Receipt
+        </button>
+        <button onclick="downloadReceipt()" id="btn-download" class="btn btn-custom btn-download">
+            <i class="bi bi-download me-2"></i>Download Receipt
+        </button>
+        <a href="{% url 'user_dashboard' %}" class="btn btn-custom btn-dash">
+            My Dashboard
+        </a>
+        <a href="{% url 'search' %}" class="btn btn-custom btn-print text-teal border-teal">
+            <i class="bi bi-search me-1"></i>Search Others
+        </a>
+    </div>
+</div>
+
+<script>
+    // Dynamically load jsPDF then run the callback
+    function loadJsPDF(callback) {
+        if (window.jspdf && window.jspdf.jsPDF) {
+            callback(window.jspdf.jsPDF);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => {
+            if (window.jspdf && window.jspdf.jsPDF) {
+                callback(window.jspdf.jsPDF);
+            } else {
+                throw new Error('jsPDF loaded but window.jspdf.jsPDF is undefined');
+            }
+        };
+        script.onerror = () => { throw new Error('Failed to load jsPDF script'); };
+        document.head.appendChild(script);
+    }
+
+    function downloadReceipt() {
+        const btn = document.getElementById('btn-download');
+        const originalHTML = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Generating...';
+
+        try {
+            loadJsPDF(function(jsPDF) {
+
+            // ── Helpers to safely read DOM text ──────────────────────────
+            const txt = (sel) => {
+                const el = document.querySelector(sel);
+                return el ? el.innerText.trim().replace(/\s+/g, ' ') : '—';
+            };
+
+            // Pull all info-label / info-value pairs from the receipt card
+            const card   = document.getElementById('receipt-card');
+            const labels = card.querySelectorAll('.info-label');
+            const values = card.querySelectorAll('.info-value');
+
+            const bookingId = txt('.id-value');
+            const headerTitle = txt('.receipt-header h5');
+
+            // ── Build PDF ────────────────────────────────────────────────
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const W = pdf.internal.pageSize.getWidth();   // 210
+            const M = 18;   // left margin
+            const RW = W - M * 2;  // usable width
+            let y = 0;
+
+            // Brand header bar
+            pdf.setFillColor(0, 0, 0);
+            pdf.rect(0, 0, W, 22, 'F');
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(13);
+            pdf.setTextColor(255, 255, 255);
+            pdf.text('HEALTHBRIDGE', M, 14);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(180, 180, 180);
+            pdf.text('Official Booking Receipt', M, 19);
+            pdf.setFontSize(8);
+            pdf.text(headerTitle, W - M, 14, { align: 'right' });
+            y = 32;
+
+            // Booking type pill
+            pdf.setFillColor(42, 157, 143);
+            pdf.roundedRect(M, y - 5, RW, 14, 3, 3, 'F');
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(9);
+            pdf.setTextColor(255, 255, 255);
+            pdf.text('VERIFIED & SECURED', W / 2, y + 4, { align: 'center' });
+            y += 18;
+
+            // Reference number box
+            pdf.setDrawColor(42, 157, 143);
+            pdf.setLineWidth(0.5);
+            pdf.setFillColor(241, 247, 246);
+            pdf.roundedRect(M, y, RW, 22, 4, 4, 'FD');
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(7);
+            pdf.setTextColor(42, 157, 143);
+            pdf.text('OFFICIAL REFERENCE NUMBER', W / 2, y + 7, { align: 'center' });
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(18);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(bookingId, W / 2, y + 16, { align: 'center' });
+            y += 28;
+
+            // Divider
+            pdf.setDrawColor(220, 220, 220);
+            pdf.setLineWidth(0.3);
+            pdf.line(M, y, W - M, y);
+            y += 8;
+
+            // Detail rows (two columns)
+            const colW = RW / 2 - 4;
+            let leftY = y, rightY = y;
+            const isLeft = (i) => i % 2 === 0;
+
+            labels.forEach((labelEl, i) => {
+                const labelText = labelEl.innerText.trim().toUpperCase();
+                const valueText = values[i] ? values[i].innerText.trim().replace(/\s+/g, ' ') : '—';
+
+                const x = isLeft(i) ? M : M + RW / 2 + 4;
+                let curY = isLeft(i) ? leftY : rightY;
+
+                // Label
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(7);
+                pdf.setTextColor(160, 160, 160);
+                pdf.text(labelText, x, curY);
+                curY += 5;
+
+                // Value (word-wrap to colW)
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(9);
+                pdf.setTextColor(0, 0, 0);
+                const lines = pdf.splitTextToSize(valueText, colW);
+                pdf.text(lines, x, curY);
+                curY += lines.length * 5 + 6;
+
+                if (isLeft(i)) { leftY = curY; } else { rightY = curY; }
+            });
+
+            y = Math.max(leftY, rightY) + 4;
+
+            // Divider
+            pdf.setDrawColor(220, 220, 220);
+            pdf.line(M, y, W - M, y);
+            y += 8;
+
+            // Arrival protocol section
+            pdf.setFillColor(241, 247, 246);
+            pdf.roundedRect(M, y, RW, 5, 2, 2, 'F');
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8);
+            pdf.setTextColor(42, 157, 143);
+            pdf.text('ARRIVAL PROTOCOL', M + 3, y + 3.5);
+            y += 9;
+
+            const protocolItems = document.querySelectorAll('.protocol-card li');
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(80, 80, 80);
+            protocolItems.forEach((li) => {
+                const liText = '•  ' + li.innerText.trim().replace(/\s+/g, ' ');
+                const lines = pdf.splitTextToSize(liText, RW - 4);
+                pdf.text(lines, M + 3, y);
+                y += lines.length * 5 + 2;
+            });
+
+            // Footer bar
+            const pageH = pdf.internal.pageSize.getHeight();
+            pdf.setFillColor(245, 245, 245);
+            pdf.rect(0, pageH - 12, W, 12, 'F');
+            pdf.setFont('helvetica', 'italic');
+            pdf.setFontSize(7);
+            pdf.setTextColor(150, 150, 150);
+            pdf.text('Generated on ' + new Date().toLocaleString(), M, pageH - 4);
+            pdf.text('HEALTHBRIDGE.in', W - M, pageH - 4, { align: 'right' });
+
+                pdf.save('HEALTHBRIDGE_Receipt_' + bookingId + '.pdf');
+
+                // Restore button after save
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }); // end loadJsPDF callback
+
+        } catch (err) {
+            console.error('Receipt download failed:', err);
+            alert('Could not generate PDF. Please use Print / Save Receipt instead.');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    }
+</script>
+{% endblock %}

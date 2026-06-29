@@ -1,0 +1,282 @@
+{% extends 'core/base.html' %}
+{% block title %}My Bed Bookings | HEALTHBRIDGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family:  "source code pro", Arial, sans-serif;
+        background-color: #fcfdfe;
+        color: #264653;
+    }
+
+    /* --- Path Navigation --- */
+    .breadcrumb-item a {
+        color: #2a9d8f;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Page Title --- */
+    .dashboard-title {
+        font-weight: 900;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+        font-size: 1.75rem;
+        color: #000;
+    }
+
+    /* --- Neat Filter Bar --- */
+    .filter-wrapper {
+        background: #fff;
+        border: 1px solid #eee;
+        padding: 12px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+
+    .filter-btn {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        padding: 8px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: 0.3s;
+        border: 1px solid transparent;
+        color: #888;
+        background: #f8f9fa;
+    }
+
+    .filter-btn.active {
+        background: #000;
+        color: #fff !important;
+    }
+
+    .filter-btn:hover:not(.active) {
+        background: #eee;
+    }
+
+    /* --- Modern Booking Row --- */
+    .booking-row {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 16px;
+        margin-bottom: 15px;
+        transition: 0.3s;
+        border-left: 6px solid #ddd; /* Default */
+        overflow: hidden;
+    }
+
+    .booking-row:hover {
+        transform: translateX(5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    /* Dynamic Left Border Accents */
+    .border-Approved { border-left-color: #2a9d8f !important; }
+    .border-Pending { border-left-color: #f1c40f !important; }
+    .border-Cancelled { border-left-color: #e63946 !important; }
+    .border-Completed { border-left-color: #000000 !important; }
+
+    .hosp-brand {
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #000;
+        text-transform: uppercase;
+    }
+
+    .meta-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #aaa;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .meta-value {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .status-pill {
+        font-size: 0.65rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Action Buttons --- */
+    .btn-manage {
+        background: #000;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.75rem;
+        padding: 10px 20px;
+        text-transform: uppercase;
+        transition: 0.3s;
+        border: none;
+    }
+
+    .btn-manage:hover {
+        background: #2a9d8f;
+        color: #fff;
+    }
+
+    .btn-create {
+        background: #2a9d8f;
+        color: #fff;
+        border-radius: 10px;
+        font-weight: 800;
+        padding: 12px 25px;
+        text-transform: uppercase;
+        border: none;
+        box-shadow: 0 4px 10px rgba(42, 157, 143, 0.2);
+    }
+
+    .btn-create:hover { background: #000; color: #fff; }
+
+    /* Admin Notes Box */
+    .admin-remark {
+        background: #fafffe;
+        border: 1px solid rgba(42, 157, 143, 0.1);
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        color: #444;
+        margin-top: 15px;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <!-- Header Section -->
+  <div class="row align-items-center mb-5 g-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item"><a href="{% url 'user_dashboard' %}">SYSTEM</a></li>
+          <li class="breadcrumb-item active text-muted small fw-bold">BED ALLOCATION</li>
+        </ol>
+      </nav>
+      <h2 class="dashboard-title">MY BED BOOKINGS</h2>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="{% url 'search' %}" class="btn btn-create">
+        <i class="bi bi-plus-lg me-2"></i>New Reservation
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Navigation -->
+  <div class="filter-wrapper mb-4">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="meta-label me-2">Show:</span>
+      <a href="{% url 'my_bookings' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All Records</a>
+      <a href="?status=Pending" class="filter-btn {% if status_filter == 'Pending' %}active{% endif %}">Pending</a>
+      <a href="?status=Approved" class="filter-btn {% if status_filter == 'Approved' %}active{% endif %}">Approved</a>
+      <a href="?status=Completed" class="filter-btn {% if status_filter == 'Completed' %}active{% endif %}">Completed</a>
+      <a href="?status=Cancelled" class="filter-btn {% if status_filter == 'Cancelled' %}active{% endif %}">Cancelled</a>
+    </div>
+  </div>
+
+  <!-- Bookings List -->
+  {% if bookings %}
+  <div class="row g-3">
+    {% for b in bookings %}
+    <div class="col-12">
+      <div class="booking-row shadow-sm border-{{ b.status }}">
+        <div class="card-body p-4">
+          <div class="row align-items-center g-4">
+            
+            <!-- Column 1: Hospital Identity -->
+            <div class="col-md-4">
+              <div class="hosp-brand mb-1">{{ b.hospital.name }}</div>
+              <div class="meta-value small text-muted"><i class="bi bi-geo-alt-fill text-teal me-1"></i> {{ b.hospital.area|upper }}, PUNE</div>
+              <div class="mt-2"><code class="text-muted extra-small">Ref ID: {{ b.booking_id }}</code></div>
+            </div>
+
+            <!-- Column 2: Clinical Details -->
+            <div class="col-md-5">
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="meta-label">Category</div>
+                  <div class="meta-value text-teal">{{ b.bed_type }} Ward</div>
+                </div>
+                <div class="col-6">
+                  <div class="meta-label">Admission Date</div>
+                  <div class="meta-value">{{ b.admission_date }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="meta-label">Est. Stay</div>
+                  <div class="meta-value">{{ b.expected_days }} Day(s)</div>
+                </div>
+                <div class="col-6">
+                  <div class="meta-label">Transaction</div>
+                  <div class="meta-value">₹{{ b.amount_paid }} <span class="text-muted small">({{ b.payment_method|upper }})</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 3: Status & Action -->
+            <div class="col-md-3 text-md-end">
+              <div class="mb-3">
+                <span class="status-pill 
+                    {% if b.status == 'Approved' %}bg-success text-white
+                    {% elif b.status == 'Cancelled' %}bg-danger text-white
+                    {% elif b.status == 'Completed' %}bg-dark text-white
+                    {% else %}bg-warning text-dark{% endif %}">
+                    {% if b.status == 'Approved' %}Confirmed{% else %}{{ b.status }}{% endif %}
+                </span>
+              </div>
+              <a href="{% url 'booking_detail' b.id %}" class="btn btn-manage">
+                View Receipt <i class="bi bi-chevron-right ms-1"></i>
+              </a>
+            </div>
+
+            <!-- Admin Remarks (Optional) -->
+            {% if b.admin_notes %}
+            <div class="col-12 mt-0">
+                <div class="admin-remark">
+                    <i class="bi bi-chat-dots-fill text-teal me-2"></i>
+                    <strong>OFFICIAL NOTE:</strong> {{ b.admin_notes }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- System Info Footer -->
+            <div class="col-12 mt-0">
+              <div class="text-muted" style="font-size: 0.7rem; opacity: 0.6; font-weight: 700;">
+                <i class="bi bi-clock-history me-1"></i> REQUESTED: {{ b.created_at|date:"d M Y, H:i" }} &bull; UPDATED: {{ b.updated_at|date:"d M Y, H:i" }}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="text-center py-5">
+    <div class="mb-4 display-2 text-light opacity-50"><i class="bi bi-inbox"></i></div>
+    <h4 class="dashboard-title text-muted">No Bed Bookings Found</h4>
+    {% if status_filter %}<p class="text-muted">No records match your filter: {{ status_filter }}.</p>{% endif %}
+    <a href="{% url 'search' %}" class="btn btn-create mt-3 px-5">
+      Find a Hospital
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,616 @@
+{% extends 'core/base.html' %}
+{% block title %}Login | HEALTHBRIDGE Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap');
+
+    :root {
+        --teal: #2a9d8f;
+        --teal-glow: rgba(42,157,143,0.35);
+        --black: #080808;
+        --white: #ffffff;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Outfit', sans-serif;
+        overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════
+       FULL IMMERSIVE BACKGROUND
+    ══════════════════════════════════════ */
+    .login-scene {
+        min-height: 100vh;
+        width: 100%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        overflow: hidden;
+    }
+
+    /* Hero BG photo */
+    .scene-bg {
+        position: absolute;
+        inset: 0;
+        background: url('https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=1600&q=80') center/cover no-repeat;
+        filter: brightness(0.28) saturate(0.8);
+        transform: scale(1.04);
+        animation: bgDrift 18s ease-in-out infinite alternate;
+    }
+    @keyframes bgDrift {
+        from { transform: scale(1.04) translateX(0px); }
+        to   { transform: scale(1.04) translateX(-20px); }
+    }
+
+    /* Teal gradient sweep over bg */
+    .scene-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            120deg,
+            rgba(8,8,8,0.98) 0%,
+            rgba(8,8,8,0.85) 35%,
+            rgba(42,157,143,0.08) 65%,
+            rgba(8,8,8,0.75) 100%
+        );
+    }
+
+    /* Animated teal orb */
+    .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(90px);
+        pointer-events: none;
+        animation: orbPulse 5s ease-in-out infinite;
+    }
+    .orb-1 {
+        width: 400px; height: 400px;
+        background: var(--teal);
+        opacity: 0.12;
+        top: -100px; left: 30%;
+        animation-delay: 0s;
+    }
+    .orb-2 {
+        width: 250px; height: 250px;
+        background: var(--teal);
+        opacity: 0.08;
+        bottom: -60px; left: 20%;
+        animation-delay: 2.5s;
+    }
+    @keyframes orbPulse {
+        0%, 100% { transform: scale(1); opacity: 0.10; }
+        50%       { transform: scale(1.2); opacity: 0.18; }
+    }
+
+    /* ══════════════════════════════════════
+       FLOATING IMAGE MOSAIC (left side)
+    ══════════════════════════════════════ */
+    .mosaic {
+        position: absolute;
+        left: 60px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 380px;
+        height: 480px;
+        z-index: 4;
+    }
+
+    .mosaic-img {
+        position: absolute;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.7);
+        border: 2px solid rgba(255,255,255,0.07);
+    }
+    .mosaic-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .mosaic-img-1 {
+        width: 220px; height: 280px;
+        top: 0; left: 0;
+        animation: float1 7s ease-in-out infinite;
+    }
+    .mosaic-img-2 {
+        width: 145px; height: 190px;
+        top: 20px; right: 0;
+        animation: float2 6s ease-in-out infinite;
+        animation-delay: 1s;
+    }
+    .mosaic-img-3 {
+        width: 190px; height: 175px;
+        bottom: 0; left: 30px;
+        animation: float1 8s ease-in-out infinite;
+        animation-delay: 2s;
+    }
+    .mosaic-img-4 {
+        width: 130px; height: 130px;
+        border-radius: 50%;
+        bottom: 30px; right: 10px;
+        animation: float2 5s ease-in-out infinite;
+        animation-delay: 0.5s;
+    }
+
+    /* teal glow ring on circle image */
+    .mosaic-img-4 {
+        box-shadow: 0 0 0 4px var(--teal), 0 20px 50px rgba(0,0,0,0.6);
+    }
+
+    @keyframes float1 {
+        0%, 100% { transform: translateY(0px) rotate(-1deg); }
+        50%       { transform: translateY(-14px) rotate(1deg); }
+    }
+    @keyframes float2 {
+        0%, 100% { transform: translateY(0px) rotate(1deg); }
+        50%       { transform: translateY(-10px) rotate(-1deg); }
+    }
+
+    /* Mosaic label badge */
+    .mosaic-badge {
+        position: absolute;
+        bottom: -18px; left: 50%;
+        transform: translateX(-50%);
+        background: var(--teal);
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding: 8px 20px;
+        border-radius: 50px;
+        white-space: nowrap;
+        box-shadow: 0 8px 25px var(--teal-glow);
+    }
+
+    /* ══════════════════════════════════════
+       BRANDING COLUMN (centre-left)
+    ══════════════════════════════════════ */
+    .brand-col {
+        position: absolute;
+        left: 480px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 5;
+        color: white;
+    }
+
+    .brand-col .eyebrow {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--teal);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: fadeUp 0.8s ease forwards;
+        opacity: 0;
+    }
+    .brand-col .eyebrow::before {
+        content: '';
+        width: 28px; height: 2px;
+        background: var(--teal);
+    }
+
+    .brand-col h1 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 6.5rem;
+        line-height: 0.88;
+        text-transform: uppercase;
+        color: white;
+        animation: fadeUp 0.8s 0.15s ease forwards;
+        opacity: 0;
+    }
+    .brand-col h1 em {
+        font-style: normal;
+        color: transparent;
+        -webkit-text-stroke: 2px var(--teal);
+    }
+
+    .brand-col .sub {
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.42);
+        line-height: 1.7;
+        max-width: 280px;
+        margin-top: 20px;
+        animation: fadeUp 0.8s 0.3s ease forwards;
+        opacity: 0;
+    }
+
+    /* Live stat row */
+    .live-stats {
+        display: flex;
+        gap: 24px;
+        margin-top: 36px;
+        animation: fadeUp 0.8s 0.45s ease forwards;
+        opacity: 0;
+    }
+    .live-stat {
+        text-align: center;
+    }
+    .live-stat .num {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.2rem;
+        color: var(--teal);
+        line-height: 1;
+    }
+    .live-stat .lbl {
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: rgba(255,255,255,0.35);
+        margin-top: 3px;
+    }
+    .live-divider {
+        width: 1px;
+        background: rgba(255,255,255,0.1);
+    }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(24px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════════
+       FORM PANEL (right)
+    ══════════════════════════════════════ */
+    .form-panel {
+        position: relative;
+        z-index: 10;
+        width: 440px;
+        min-height: 100vh;
+        background: var(--white);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 70px 55px;
+        clip-path: polygon(6% 0%, 100% 0%, 100% 100%, 0% 100%);
+        animation: slideInRight 0.7s ease forwards;
+    }
+    @keyframes slideInRight {
+        from { transform: translateX(60px); opacity: 0; }
+        to   { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Teal top accent line */
+    .form-panel::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 6%; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--teal), #3dddd0);
+    }
+
+    .fp-tag {
+        font-size: 0.62rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: var(--teal);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .fp-tag .dot-live {
+        width: 7px; height: 7px;
+        background: #22c55e;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(34,197,94,0.25);
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%,100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
+        50%      { box-shadow: 0 0 0 7px rgba(34,197,94,0.08); }
+    }
+
+    .fp-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 3rem;
+        color: var(--black);
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+    .fp-title em {
+        font-style: normal;
+        color: var(--teal);
+    }
+    .fp-sub {
+        font-size: 0.82rem;
+        color: #aaa;
+        margin-bottom: 38px;
+    }
+
+    /* Alert */
+    .alert-login {
+        background: #fff5f5;
+        border-left: 3px solid #e63946;
+        padding: 11px 14px;
+        border-radius: 0 6px 6px 0;
+        font-size: 0.78rem;
+        color: #c1121f;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    /* Input field */
+    .field {
+        margin-bottom: 28px;
+        position: relative;
+    }
+    .field-lbl {
+        display: block;
+        font-size: 0.63rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #c0c0c0;
+        margin-bottom: 8px;
+    }
+    .field input {
+        width: 100%;
+        border: none;
+        border-bottom: 2px solid #ececec;
+        padding: 10px 36px 10px 0;
+        font-size: 1.02rem;
+        font-weight: 600;
+        color: var(--black);
+        background: transparent;
+        outline: none;
+        font-family: 'Outfit', sans-serif;
+        transition: border-color 0.3s;
+    }
+    .field input:focus { border-bottom-color: var(--teal); }
+    .field input::placeholder { color: #ddd; font-weight: 400; }
+
+    /* Animated focus line */
+    .field::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0;
+        width: 0; height: 2px;
+        background: var(--teal);
+        transition: width 0.35s ease;
+    }
+    .field:focus-within::after { width: 100%; }
+
+    .pw-toggle {
+        position: absolute;
+        right: 0; bottom: 10px;
+        background: none;
+        border: none;
+        color: #ccc;
+        cursor: pointer;
+        padding: 0;
+        font-size: 1rem;
+        transition: color 0.2s;
+    }
+    .pw-toggle:hover { color: var(--teal); }
+
+    .field-err {
+        font-size: 0.72rem;
+        color: #e63946;
+        margin-top: 4px;
+        display: block;
+    }
+
+    /* Submit */
+    .btn-enter {
+        width: 100%;
+        padding: 17px;
+        background: var(--black);
+        color: white;
+        border: none;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.15rem;
+        letter-spacing: 3px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-top: 6px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .btn-enter::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 0;
+        background: var(--teal);
+        transition: width 0.4s ease;
+        z-index: 0;
+    }
+    .btn-enter:hover::before { width: 100%; }
+    .btn-enter:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 30px var(--teal-glow);
+    }
+    .btn-enter span { position: relative; z-index: 1; }
+
+    /* Footer links */
+    .fp-footer {
+        margin-top: 30px;
+        padding-top: 22px;
+        border-top: 1px solid #f0f0f0;
+        font-size: 0.78rem;
+        color: #bbb;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .fp-footer a {
+        color: var(--teal);
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .fp-footer a:hover { text-decoration: underline; }
+
+    /* Security strip */
+    .sec-strip {
+        margin-top: 28px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .sec-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #ccc;
+        font-weight: 700;
+    }
+    .sec-item i { color: var(--teal); font-size: 0.75rem; }
+
+    /* ══ Responsive ══ */
+    @media (max-width: 991px) {
+        body { overflow: auto; }
+        .mosaic, .brand-col { display: none; }
+        .login-scene { justify-content: center; }
+        .form-panel {
+            width: 100%;
+            min-height: 100vh;
+            clip-path: none;
+            padding: 60px 30px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-scene">
+
+    <!-- Background layers -->
+    <div class="scene-bg"></div>
+    <div class="scene-overlay"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- ── Floating image mosaic ── -->
+    <div class="mosaic">
+        <div class="mosaic-img mosaic-img-1">
+            <img src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=500&q=80" alt="Hospital">
+        </div>
+        <div class="mosaic-img mosaic-img-2">
+            <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?w=400&q=80" alt="Doctor">
+        </div>
+        <div class="mosaic-img mosaic-img-3">
+            <img src="https://images.unsplash.com/photo-1504813184591-01572f98c85f?w=400&q=80" alt="Medical">
+        </div>
+        <div class="mosaic-img mosaic-img-4">
+            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&q=80" alt="Nurse">
+        </div>
+        <div class="mosaic-badge">Pune Healthcare Network</div>
+    </div>
+
+    <!-- ── Brand column ── -->
+    <div class="brand-col">
+        <div class="eyebrow">Healthbridge Portal</div>
+        <h1>PUNE<br><em>HEALTH</em><br>SYSTEMS.</h1>
+        <p class="sub">Monitor, manage, and secure healthcare capacity across 50+ hospitals in real-time.</p>
+
+        <div class="live-stats">
+            <div class="live-stat">
+                <div class="num">312</div>
+                <div class="lbl">Beds Live</div>
+            </div>
+            <div class="live-divider"></div>
+            <div class="live-stat">
+                <div class="num">50+</div>
+                <div class="lbl">Hospitals</div>
+            </div>
+            <div class="live-divider"></div>
+            <div class="live-stat">
+                <div class="num">24/7</div>
+                <div class="lbl">Uptime</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Form panel ── -->
+    <div class="form-panel">
+
+        <div class="fp-tag">
+            <span class="dot-live"></span>
+            System Online
+        </div>
+
+        <div class="fp-title">Sign <em>In.</em></div>
+        <p class="fp-sub">Enter your credentials to access the portal.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert-login">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <div class="field">
+                <label class="field-lbl">Username or Email</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <span class="field-err">{{ form.username.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label class="field-lbl">Password</label>
+                {{ form.password }}
+                <button type="button" class="pw-toggle" id="togglePw">
+                    <i class="bi bi-eye"></i>
+                </button>
+                {% if form.password.errors %}
+                    <span class="field-err">{{ form.password.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn-enter">
+                <span>Enter Portal &nbsp;→</span>
+            </button>
+        </form>
+
+        <div class="fp-footer">
+            <span>Hospital admin? <a href="{% url 'admin_login' %}">Access Admin Panel →</a></span>
+            <span>No account? <a href="{% url 'user_register' %}">Register here →</a></span>
+        </div>
+
+        <div class="sec-strip">
+            <div class="sec-item"><i class="bi bi-shield-lock-fill"></i> SSL Secured</div>
+            <div class="sec-item"><i class="bi bi-patch-check-fill"></i> NABH Verified</div>
+            <div class="sec-item"><i class="bi bi-lock-fill"></i> Encrypted</div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Password toggle
+const btn = document.getElementById('togglePw');
+const inp = document.querySelector('input[name="password"]');
+if (btn && inp) {
+    btn.addEventListener('click', function () {
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        this.querySelector('i').className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+}
+
+window.onload = function () {
+    document.querySelectorAll('input').forEach(i => i.setAttribute('autocomplete', 'off'));
+};
+</script>
+{% endblock %}

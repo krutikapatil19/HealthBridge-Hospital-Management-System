@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HEALTHBRIDGE - Hospital Bed Booking{% endblock %}</title>
+    
+    <!-- Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    {% load static %}
+    <style>
+        :root {
+            --primary-teal: #2a9d8f;
+            --deep-black: #0a0a0a;
+            --glass-white: rgba(255, 255, 255, 0.9);
+            --border-subtle: rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family:  "poppins", sans-serif;
+            background-color: #ffffff;
+            color: var(--deep-black);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, .navbar-brand {
+            font-family:  "source code pro", Arial, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+
+        /* --- Custom Navigation --- */
+        .navbar-custom {
+            background: var(--deep-black);
+            padding: 1.2rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem !important;
+            color: #fff !important;
+        }
+
+        .navbar-brand span {
+            color: var(--primary-teal);
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.7) !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 10px;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-teal) !important;
+        }
+
+        /* --- User Profile Dropdown --- */
+        .user-avatar-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 5px 15px;
+            border-radius: 50px;
+            transition: 0.3s;
+        }
+
+        .user-avatar-btn:hover {
+            background: var(--primary-teal);
+            border-color: var(--primary-teal);
+        }
+
+        .dropdown-menu {
+            border: none;
+            border-radius: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: #fff;
+            padding: 1rem;
+            margin-top: 15px;
+        }
+
+        .dropdown-item {
+            font-weight: 600;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--primary-teal);
+            color: #fff;
+        }
+
+        /* --- Floating Messages --- */
+        .alert-container {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+
+        .alert {
+            border-radius: 0;
+            border: none;
+            border-left: 5px solid var(--primary-teal);
+            background: var(--deep-black);
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* --- Footer --- */
+        footer {
+            background: var(--deep-black);
+            padding: 80px 0 40px 0;
+            color: #fff;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-logo {
+            font-family:  "source code pro", Arial, sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .footer-link {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-teal);
+        }
+
+        /* --- Buttons --- */
+        .btn-register {
+            background: var(--primary-teal);
+            color: white !important;
+            border-radius: 0;
+            padding: 8px 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn-register:hover {
+            background: #fff;
+            color: var(--deep-black) !important;
+        }
+
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <i class="bi bi-shield-plus me-2 text-teal"></i>HEALTH<span>BRIDGE</span>
+        </a>
+        
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'index' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'search' %}">Find Bed</a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto align-items-center">
+                {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle user-avatar-btn d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
+                            <div class="bg-teal text-white d-flex align-items-center justify-content-center fw-bold rounded-circle"
+                                 style="width:28px;height:28px;font-size:11px; background-color: var(--primary-teal);">
+                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                            </div>
+                            <span class="text-white">{{ user.first_name }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end animate slideIn">
+                            <li><div class="dropdown-header">
+                                <div class="fw-bold text-dark">{{ user.get_full_name|default:user.username }}</div>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'user_dashboard' %}">
+                                <i class="bi bi-grid-1x2 me-2"></i>Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'my_bookings' %}">
+                                <i class="bi bi-bed me-2"></i>Bed Bookings
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'my_appointments' %}">
+                                <i class="bi bi-calendar2-check me-2"></i>Appointments
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'user_logout' %}">
+                                <i class="bi bi-power me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'user_login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-register ms-lg-3" href="{% url 'user_register' %}">Join Platform</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Toast-style Django Messages -->
+{% if messages %}
+<div class="alert-container">
+    {% for message in messages %}
+    <div class="alert alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle-fill me-2 text-teal"></i> {{ message }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<footer>
+    <div class="container">
+        <div class="row g-4 justify-content-between">
+            <div class="col-lg-4">
+                <div class="footer-logo">HEALTH<span class="text-teal">BRIDGE</span></div>
+                <p class="text-muted small">Next-generation hospital bed tracking system. Providing real-time medical infrastructure data for Pune City residents.</p>
+                <div class="d-flex gap-3 mt-4">
+                    <a href="#" class="footer-link fs-5"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="footer-link fs-5"><i class="bi bi-linkedin"></i></a>
+                    <a href="#" class="footer-link fs-5"><i class="bi bi-instagram"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-2">
+                <h6 class="fw-bold mb-4">PLATFORM</h6>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'search' %}" class="footer-link small d-block mb-2">Search Hospitals</a></li>
+                    <li><a href="#" class="footer-link small d-block mb-2">Emergency Help</a></li>
+                    <li><a href="#" class="footer-link small d-block mb-2">Partner Login</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3">
+                <h6 class="fw-bold mb-4">CONTACT</h6>
+                <p class="small text-muted mb-1"><i class="bi bi-geo-alt me-2 text-teal"></i> Shivajinagar, Pune, MH</p>
+                <p class="small text-muted mb-1"><i class="bi bi-telephone me-2 text-teal"></i> +91 20 2233 4455</p>
+                <p class="small text-muted"><i class="bi bi-envelope me-2 text-teal"></i> support@HEALTHBRIDGE.in</p>
+            </div>
+        </div>
+        <div class="border-top border-secondary mt-5 pt-4 text-center">
+            <p class="text-muted extra-small">© 2024 HEALTHBRIDGE System. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({ duration: 1000, once: true });
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        let alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            let bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

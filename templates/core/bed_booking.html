@@ -1,0 +1,328 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Book a Bed | {{ hospital.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family:  "source code pro", Arial, sans-serif;
+        background-color: #fcfdfe;
+        color: #264653;
+    }
+
+    /* --- Stepper Navigation --- */
+    .stepper-wrapper {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        position: relative;
+    }
+
+    .step-item {
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+    }
+
+    .step-circle {
+        width: 35px; height: 35px;
+        border-radius: 50%;
+        background: #eee;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 10px;
+        font-weight: bold;
+        font-size: 0.8rem;
+        transition: 0.3s;
+    }
+
+    .step-item.active .step-circle {
+        background: #2a9d8f;
+        color: #fff;
+        box-shadow: 0 0 0 5px rgba(42, 157, 143, 0.1);
+    }
+
+    .step-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #aaa;
+        letter-spacing: 0.5px;
+    }
+
+    .step-item.active .step-label { color: #2a9d8f; }
+
+    /* --- Card Styling --- */
+    .glass-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+
+    .card-head-dark {
+        background: #000;
+        color: #fff;
+        padding: 20px 30px;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .form-section-title {
+        font-size: 0.8rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #2a9d8f;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 10px;
+        margin-bottom: 25px;
+        letter-spacing: 1px;
+    }
+
+    /* --- Form Field Control --- */
+    /* Styling the Django form fields */
+    .form-body input, .form-body select, .form-body textarea {
+        display: block;
+        width: 100%;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #212529;
+        background-color: #f8f9fa;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        transition: border-color .15s ease-in-out;
+        margin-bottom: 5px;
+    }
+
+    .form-body input:focus {
+        outline: none;
+        border-color: #2a9d8f;
+        background-color: #fff;
+    }
+
+    .label-small {
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #555;
+    }
+
+    /* --- Sidebar Summary --- */
+    .summary-card {
+        background: #fff;
+        border-top: 5px solid #2a9d8f;
+        border-radius: 12px;
+        padding: 25px;
+    }
+
+    .summary-fee {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #000;
+    }
+
+    /* --- Button --- */
+    .btn-pay {
+        background: #000;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 20px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: 0.3s;
+    }
+
+    .btn-pay:hover {
+        background: #2a9d8f;
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-decoration-none text-muted small fw-bold">HOME</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'hospital_detail' hospital.id %}" class="text-decoration-none text-muted small fw-bold">{{ hospital.name|upper }}</a></li>
+            <li class="breadcrumb-item active text-teal small fw-bold" aria-current="page">BOOKING</li>
+        </ol>
+    </nav>
+
+    <!-- Progress Steps -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="stepper-wrapper">
+                <div class="step-item active">
+                    <div class="step-circle">01</div>
+                    <div class="step-label">Patient Info</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-circle">02</div>
+                    <div class="step-label">Payment</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-circle">03</div>
+                    <div class="step-label">Complete</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Form Area -->
+        <div class="col-lg-8">
+            <div class="glass-card shadow-sm">
+                <div class="card-head-dark d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="bi bi-shield-plus me-2"></i>Registration Form</h5>
+                    <span class="small opacity-50">Ref: PUNEH-{{ hospital.id }}</span>
+                </div>
+                
+                <div class="p-4 p-md-5 form-body">
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <!-- Phase 1 -->
+                        <div class="form-section-title">01. Patient Personal Profile</div>
+                        <div class="row g-3 mb-5">
+                            <div class="col-md-6">
+                                <label class="label-small">FULL NAME *</label>
+                                {{ form.patient_name }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="label-small">AGE *</label>
+                                {{ form.patient_age }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="label-small">GENDER *</label>
+                                {{ form.patient_gender }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="label-small">PHONE NUMBER *</label>
+                                {{ form.patient_phone }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="label-small">EMAIL ADDRESS</label>
+                                {{ form.patient_email }}
+                            </div>
+                            <div class="col-12">
+                                <label class="label-small">PERMANENT ADDRESS *</label>
+                                {{ form.patient_address }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="label-small">AADHAAR ID NUMBER</label>
+                                {{ form.aadhar_number }}
+                            </div>
+                        </div>
+
+                        <!-- Phase 2 -->
+                        <div class="form-section-title">02. Clinical Requirements</div>
+                        <div class="row g-3 mb-5">
+                            <div class="col-12">
+                                <label class="label-small">MEDICAL CONDITION / SYMPTOMS *</label>
+                                {{ form.medical_condition }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="label-small">BED CATEGORY *</label>
+                                {{ form.bed_type }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="label-small">ADMISSION DATE *</label>
+                                {{ form.admission_date }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="label-small">EXPECTED DURATION (DAYS) *</label>
+                                {{ form.expected_days }}
+                            </div>
+                            <div class="col-12">
+                                <label class="label-small">ADDITIONAL SERVICE REQUESTS</label>
+                                {{ form.services_required }}
+                            </div>
+                        </div>
+
+                        <!-- Phase 3 -->
+                        <div class="form-section-title">03. Emergency Protocol</div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="label-small">CONTACT NAME *</label>
+                                {{ form.emergency_contact_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="label-small">CONTACT PHONE *</label>
+                                {{ form.emergency_contact_phone }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="label-small">RELATIONSHIP *</label>
+                                {{ form.emergency_contact_relation }}
+                            </div>
+                        </div>
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger rounded-3 mb-4 border-0 bg-danger bg-opacity-10 text-danger">
+                            <h6 class="fw-bold">Review required:</h6>
+                            {{ form.errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="pt-4 border-top">
+                            <button type="submit" class="btn btn-pay w-100">
+                                Verify and Proceed to Payment <i class="bi bi-chevron-right ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="summary-card shadow-sm sticky-top" style="top: 100px;">
+                <h6 class="fw-bold text-uppercase small mb-4" style="letter-spacing: 1px;">Booking Summary</h6>
+                
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="bg-light p-2 rounded">
+                        <i class="bi bi-hospital fs-4 text-teal"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">{{ hospital.name }}</div>
+                        <div class="small text-muted">{{ hospital.area }}, Pune</div>
+                    </div>
+                </div>
+
+                <div class="py-3 border-top border-bottom mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small fw-bold">Service</span>
+                        <span class="small fw-bold">Bed Admission</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small fw-bold">Hospital Availability</span>
+                        <span class="small fw-bold text-success">{{ hospital.available_beds }} Vacant</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small fw-bold">Verification</span>
+                        <span class="small fw-bold">Required at Desk</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold text-uppercase small">Platform Fee</span>
+                    <span class="summary-fee">₹500</span>
+                </div>
+                <p class="text-muted extra-small" style="font-size: 0.7rem;">
+                    * This fee secures your digital slot. Hospital treatment charges are billed separately by the facility.
+                </p>
+
+                <div class="mt-4 p-3 rounded-3 bg-light d-flex gap-2">
+                    <i class="bi bi-shield-lock-fill text-teal"></i>
+                    <span class="extra-small text-muted">Your medical data is encrypted and shared only with the selected hospital's administration.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

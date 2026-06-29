@@ -1,0 +1,561 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ hospital.name }} | HEALTHBRIDGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family: "Source Code Pro", "Segoe UI", Arial, sans-serif;
+        background-color: #f8fbfb;
+        color: #264653;
+    }
+
+    /* --- Breadcrumbs --- */
+    .breadcrumb-item a {
+        color: #2a9d8f;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    /* --- Hero Image Section --- */
+    .hospital-header-card {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+
+    /* Hero image wrapper — fixed height, clips overflow */
+    .hero-img-wrap {
+        position: relative;
+        width: 100%;
+        height: 350px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f0f4ff, #e8f5e9);
+    }
+
+    /* The actual hero image */
+    .hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        transition: transform 0.5s ease;
+    }
+    .hero-img-wrap:hover .hero-img {
+        transform: scale(1.04);
+    }
+
+    /* Fallback placeholder — shown when no image */
+    .hero-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f0f4ff, #e8f5e9);
+        gap: 12px;
+    }
+    .hero-placeholder i {
+        font-size: 80px;
+        color: #2a9d8f;
+        opacity: 0.3;
+    }
+    .hero-placeholder span {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #aaa;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Emergency ribbon on hero */
+    .hero-er-badge {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        background: #e63946;
+        color: #fff;
+        font-weight: 900;
+        font-size: 0.72rem;
+        padding: 8px 18px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 2;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+    }
+
+    /* Rating pill on hero */
+    .hero-rating {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.75);
+        color: #2a9d8f;
+        padding: 8px 14px;
+        border-radius: 50px;
+        font-weight: 900;
+        font-size: 0.82rem;
+        z-index: 2;
+        backdrop-filter: blur(4px);
+    }
+
+    /* --- Rating pill (non-hero) --- */
+    .rating-pill {
+        background: #000;
+        color: #2a9d8f;
+        padding: 6px 15px;
+        border-radius: 50px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    /* --- Command Center (Sidebar) --- */
+    .booking-card {
+        border: none;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 15px 35px rgba(42, 157, 143, 0.1);
+        position: sticky;
+        top: 100px;
+    }
+
+    .bed-stat-box {
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        background: #fdfdfd;
+        border: 1px solid #f0f0f0;
+        transition: 0.3s;
+    }
+    .bed-stat-box:hover {
+        border-color: #2a9d8f;
+        background: #fafffe;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        display: block;
+        line-height: 1;
+    }
+    .stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #999;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Section Styling --- */
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .section-title::after {
+        content: "";
+        height: 2px;
+        flex-grow: 1;
+        background: #eee;
+    }
+
+    /* --- Department Chips --- */
+    .dept-chip {
+        background: #fff;
+        border: 1px solid #eee;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: 0.3s;
+    }
+    .dept-chip:hover {
+        border-color: #2a9d8f;
+        color: #2a9d8f;
+        transform: translateY(-2px);
+    }
+
+    /* --- Doctor Cards --- */
+    .doc-card {
+        background: #fff;
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid #f0f0f0;
+        transition: 0.3s;
+        height: 100%;
+    }
+    .doc-card:hover {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        border-color: #2a9d8f;
+        transform: translateY(-2px);
+    }
+
+    .doc-avatar {
+        width: 50px;
+        height: 50px;
+        background: #000;
+        color: #2a9d8f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-weight: 900;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    /* --- Action Buttons --- */
+    .btn-book-bed {
+        background: #2a9d8f;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 18px;
+        font-weight: bold;
+        transition: 0.3s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+    .btn-book-bed:hover {
+        background: #218377;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(42,157,143,0.3);
+    }
+
+    .btn-book-apt {
+        background: #000;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 18px;
+        font-weight: bold;
+        transition: 0.3s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+    .btn-book-apt:hover {
+        background: #222;
+        color: #2a9d8f;
+        transform: translateY(-2px);
+    }
+
+    .btn-disabled {
+        background: #f5f5f5;
+        color: #bbb;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 18px;
+        font-weight: bold;
+        display: block;
+        text-align: center;
+        cursor: not-allowed;
+    }
+
+    /* text-teal utility */
+    .text-teal { color: #2a9d8f !important; }
+
+    /* --- Location Link --- */
+    .location-link {
+        cursor: pointer;
+        border-radius: 12px;
+        padding: 10px;
+        margin: -10px;
+        transition: background 0.2s ease;
+    }
+    .location-link:hover {
+        background: #f0fffe;
+    }
+    .location-link:hover .fw-bold.text-dark {
+        color: #2a9d8f !important;
+        text-decoration: underline;
+    }
+    .location-link .map-open-hint {
+        font-size: 0.7rem;
+        color: #2a9d8f;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .location-link:hover .map-open-hint {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">HOME</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'search' %}">HOSPITALS</a></li>
+            <li class="breadcrumb-item active fw-bold">{{ hospital.name|upper }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-5">
+
+        <!-- ══════════ MAIN CONTENT ══════════ -->
+        <div class="col-lg-8">
+            <div class="hospital-header-card mb-5">
+
+                <!-- ── Hero Image ── -->
+                <div class="hero-img-wrap">
+
+                    {% if hospital.emergency %}
+                    <div class="hero-er-badge">
+                        <i class="bi bi-alarm-fill me-1"></i>24/7 EMERGENCY
+                    </div>
+                    {% endif %}
+
+                    <div class="hero-rating">
+                        <i class="bi bi-star-fill me-1"></i>{{ hospital.rating }}
+                    </div>
+
+                    {% if hospital.image %}
+                        {# Uploaded FileField — always reliable #}
+                        <img class="hero-img"
+                             src="{{ hospital.image.url }}"
+                             alt="{{ hospital.name }}">
+
+                    {% elif hospital.image_url %}
+                        {# External URL — fall back to placeholder on broken link #}
+                        <img class="hero-img"
+                             src="{{ hospital.image_url }}"
+                             alt="{{ hospital.name }}"
+                             onerror="this.style.display='none';
+                                      document.getElementById('hero-placeholder-{{ hospital.id }}').style.display='flex';">
+                        <div class="hero-placeholder" id="hero-placeholder-{{ hospital.id }}" style="display:none;">
+                            <i class="bi bi-hospital"></i>
+                            <span>{{ hospital.name }}</span>
+                        </div>
+
+                    {% else %}
+                        {# No image at all #}
+                        <div class="hero-placeholder">
+                            <i class="bi bi-hospital"></i>
+                            <span>{{ hospital.name }}</span>
+                        </div>
+                    {% endif %}
+
+                </div>
+                <!-- /hero-img-wrap -->
+
+                <!-- ── Hospital Info ── -->
+                <div class="p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <h1 class="fw-bold m-0" style="font-size:2.2rem;letter-spacing:-1px;">
+                            {{ hospital.name }}
+                        </h1>
+                        <div class="rating-pill">
+                            <i class="bi bi-star-fill me-1"></i>{{ hospital.rating }}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+
+                        <!-- ── Location — clicks open Google Maps ── -->
+                        <div class="col-md-6">
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ hospital.address|urlencode }}+{{ hospital.area|urlencode }}+Pune"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="location-link d-flex align-items-start gap-3 text-decoration-none">
+                                <i class="bi bi-geo-alt-fill text-teal fs-4 mt-1"></i>
+                                <div>
+                                    <div class="fw-bold small text-uppercase text-muted">
+                                        Location&nbsp;<i class="bi bi-box-arrow-up-right" style="font-size:0.65rem;"></i>
+                                    </div>
+                                    <div class="fw-bold text-dark">{{ hospital.address }}</div>
+                                    <div class="small text-teal fw-bold mt-1">
+                                        <i class="bi bi-pin-map me-1"></i>{{ hospital.area }}, Pune
+                                    </div>
+                                    <div class="map-open-hint">
+                                        <i class="bi bi-map"></i> Open in Google Maps
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="bi bi-telephone-outbound-fill text-teal fs-4"></i>
+                                <div>
+                                    <div class="fw-bold small text-uppercase text-muted">Contact Info</div>
+                                    <div class="fw-bold">{{ hospital.phone }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Badges -->
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% if hospital.emergency %}
+                        <span class="badge bg-danger px-3 py-2" style="border-radius:8px;">
+                            <i class="bi bi-lightning-fill me-1"></i>24/7 EMERGENCY
+                        </span>
+                        {% endif %}
+                        <span class="badge bg-light text-dark px-3 py-2 border" style="border-radius:8px;">
+                            <i class="bi bi-shield-check text-teal me-1"></i>NABH ACCREDITED
+                        </span>
+                        {% if hospital.established_year %}
+                        <span class="badge bg-light text-muted px-3 py-2 border" style="border-radius:8px;">
+                            EST. {{ hospital.established_year }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if hospital.description %}
+                    <p class="text-muted" style="font-size:1.05rem;line-height:1.7;">
+                        {{ hospital.description }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ── Departments ── -->
+            {% if departments %}
+            <div class="mb-5">
+                <h5 class="section-title">
+                    <i class="bi bi-grid-3x3-gap-fill text-teal"></i>DEPARTMENTS
+                </h5>
+                <div class="row g-3">
+                    {% for dept in departments %}
+                    <div class="col-6 col-md-4">
+                        <div class="dept-chip">
+                            <i class="bi bi-plus-circle-fill text-teal"></i>
+                            {{ dept.name }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ── Doctors ── -->
+            {% if doctors %}
+            <div class="mb-5">
+                <h5 class="section-title">
+                    <i class="bi bi-people-fill text-teal"></i>OUR SPECIALISTS
+                </h5>
+                <div class="row g-4">
+                    {% for doctor in doctors %}
+                    <div class="col-md-6">
+                        <div class="doc-card">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="doc-avatar">{{ doctor.name|first }}</div>
+                                <div>
+                                    <div class="fw-bold fs-6">Dr. {{ doctor.name }}</div>
+                                    <div class="text-teal small fw-bold">
+                                        {{ doctor.department.name|upper }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="small text-muted mb-1">
+                                <i class="bi bi-mortarboard me-2"></i>{{ doctor.qualification }}
+                            </div>
+                            <div class="small text-muted mb-3">
+                                <i class="bi bi-clock-history me-2"></i>
+                                {{ doctor.experience_years }} Years Experience
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                <span class="fw-bold fs-6">₹{{ doctor.consultation_fee }}</span>
+                                <span class="small fw-bold text-muted">CONSULTATION FEE</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+        <!-- /col-lg-8 -->
+
+        <!-- ══════════ SIDEBAR ══════════ -->
+        <div class="col-lg-4">
+            <div class="booking-card p-4">
+                <h5 class="fw-bold mb-4" style="letter-spacing:-0.5px;">
+                    <i class="bi bi-bar-chart-fill text-teal me-2"></i>AVAILABILITY DASHBOARD
+                </h5>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="bed-stat-box">
+                            <span class="stat-number text-teal">{{ hospital.available_beds }}</span>
+                            <span class="stat-label">GENERAL BEDS</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bed-stat-box">
+                            <span class="stat-number" style="color:#000;">{{ hospital.available_icu_beds }}</span>
+                            <span class="stat-label">ICU VACANT</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bed-stat-box">
+                            <span class="stat-number text-muted" style="font-size:1.2rem;">
+                                {{ hospital.total_beds }}
+                            </span>
+                            <span class="stat-label">TOTAL CAPACITY</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bed-stat-box">
+                            <span class="stat-number text-muted" style="font-size:1.2rem;">
+                                {{ hospital.occupied_beds }}
+                            </span>
+                            <span class="stat-label">OCCUPIED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-3">
+                    {% if hospital.available_beds > 0 %}
+                    <a href="{% url 'bed_booking' hospital.id %}" class="btn-book-bed">
+                        <i class="bi bi-bed me-2"></i>BOOK A BED
+                    </a>
+                    {% else %}
+                    <div class="btn-disabled">
+                        <i class="bi bi-slash-circle me-2"></i>NO BEDS AVAILABLE
+                    </div>
+                    {% endif %}
+
+                    <a href="{% url 'appointment' hospital.id %}" class="btn-book-apt">
+                        <i class="bi bi-calendar2-check me-2"></i>BOOK APPOINTMENT
+                    </a>
+                </div>
+
+                <div class="mt-4 p-3 bg-light rounded-3">
+                    <div class="d-flex gap-2 small text-muted">
+                        <i class="bi bi-info-circle-fill text-teal flex-shrink-0 mt-1"></i>
+                        <span>Bookings are valid for 4 hours. Final admission is subject to hospital verification.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /col-lg-4 -->
+
+    </div>
+</div>
+{% endblock %}

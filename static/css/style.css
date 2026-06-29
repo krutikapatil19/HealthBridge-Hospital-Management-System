@@ -1,0 +1,109 @@
+/* ===== HEALTHBRIDGE - Main Stylesheet ===== */
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 60%, #084298 100%);
+    min-height: 340px;
+    display: flex;
+    align-items: center;
+}
+
+/* Hospital Cards */
+.hospital-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e9ecef;
+}
+.hospital-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+}
+
+/* Stat Cards on Homepage */
+.stat-card {
+    background: #f8f9fa;
+    transition: background 0.2s;
+}
+.stat-card:hover {
+    background: #e9ecef;
+}
+
+/* Payment Option Cards */
+.payment-card {
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 2px solid #dee2e6 !important;
+}
+.payment-card:hover {
+    border-color: #0d6efd !important;
+    background: #f0f6ff;
+}
+.payment-card.active-payment {
+    border-color: #0d6efd !important;
+    background: #e8f0fe;
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+}
+
+/* Success Confirmation Icon animation */
+.success-icon {
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Feature Icons on Home */
+.feature-icon {
+    transition: transform 0.2s;
+}
+.feature-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Admin Sidebar Active Link */
+.sidebar .nav-link.active {
+    background: rgba(13, 110, 253, 0.2) !important;
+    color: #fff !important;
+}
+
+/* Print Styles */
+@media print {
+    .navbar, footer, .btn, nav[aria-label="breadcrumb"] {
+        display: none !important;
+    }
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+    .hero-section h1 { font-size: 1.8rem; }
+    .hero-section { min-height: 280px; }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #888; }
+
+/* Dashboard booking row cards */
+.booking-row-card {
+    transition: box-shadow 0.15s;
+    border: 1px solid #e9ecef;
+}
+.booking-row-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.10) !important;
+}
+
+/* Status badge glow for approved */
+.badge.bg-success {
+    box-shadow: 0 0 0 2px rgba(25,135,84,0.15);
+}
+
+/* Auth pages */
+.min-vh-75 { min-height: 75vh; }
+.rounded-top-4 { border-top-left-radius: 1rem !important; border-top-right-radius: 1rem !important; }
+.rounded-bottom-4 { border-bottom-left-radius: 1rem !important; border-bottom-right-radius: 1rem !important; }

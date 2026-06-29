@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HQ Admin Login | HEALTHBRIDGE</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --teal: #2a9d8f;
+            --teal-dim: rgba(42,157,143,0.15);
+            --teal-glow: rgba(42,157,143,0.4);
+            --black: #060606;
+            --card: #0d0d0d;
+            --border: rgba(42,157,143,0.18);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--black);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ══════════════════════════════
+           CINEMATIC BACKGROUND
+        ══════════════════════════════ */
+        .scene {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* Background photo */
+        .scene-photo {
+            position: absolute;
+            inset: 0;
+            background: url('https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=1800&q=80') center/cover no-repeat;
+            filter: brightness(0.12) saturate(0.5);
+            animation: slowDrift 20s ease-in-out infinite alternate;
+        }
+        @keyframes slowDrift {
+            from { transform: scale(1.05) translateX(0); }
+            to   { transform: scale(1.05) translateX(-30px); }
+        }
+
+        /* Green scanline sweep */
+        .scene-scanlines {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 3px,
+                rgba(42,157,143,0.015) 3px,
+                rgba(42,157,143,0.015) 4px
+            );
+            pointer-events: none;
+        }
+
+        /* Grid overlay */
+        .scene-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(42,157,143,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(42,157,143,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        /* Radial teal glow from centre */
+        .scene-glow {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(42,157,143,0.07) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Corner accent lines */
+        .corner {
+            position: absolute;
+            width: 60px; height: 60px;
+            pointer-events: none;
+        }
+        .corner--tl { top: 30px; left: 30px; border-top: 2px solid var(--teal); border-left: 2px solid var(--teal); opacity: 0.4; }
+        .corner--tr { top: 30px; right: 30px; border-top: 2px solid var(--teal); border-right: 2px solid var(--teal); opacity: 0.4; }
+        .corner--bl { bottom: 30px; left: 30px; border-bottom: 2px solid var(--teal); border-left: 2px solid var(--teal); opacity: 0.4; }
+        .corner--br { bottom: 30px; right: 30px; border-bottom: 2px solid var(--teal); border-right: 2px solid var(--teal); opacity: 0.4; }
+
+       
+
+        /* ══════════════════════════════
+           TICKER TAPE (top)
+        ══════════════════════════════ */
+        .ticker-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 32px;
+            background: rgba(42,157,143,0.08);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+        }
+        .ticker-inner {
+            display: flex;
+            gap: 60px;
+            white-space: nowrap;
+            animation: ticker 22s linear infinite;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--teal);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+        @keyframes ticker {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+        .ticker-sep { color: rgba(42,157,143,0.3); }
+
+        /* ══════════════════════════════
+           CENTRE CARD
+        ══════════════════════════════ */
+        .page-center {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px 40px;
+        }
+
+        .admin-card {
+            width: 100%;
+            max-width: 430px;
+            background: rgba(10,10,10,0.92);
+            border: 1px solid var(--border);
+            padding: 50px 48px;
+            position: relative;
+            backdrop-filter: blur(20px);
+            animation: cardIn 0.7s cubic-bezier(0.16,1,0.3,1) forwards;
+            opacity: 0;
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Top teal bar with glow */
+        .admin-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--teal), #3dddd0, var(--teal), transparent);
+            box-shadow: 0 0 20px var(--teal-glow);
+        }
+
+        /* Subtle inner glow */
+        .admin-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 0;
+            background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(42,157,143,0.05) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        /* ══ Brand header ══ */
+        .card-brand {
+            text-align: center;
+            margin-bottom: 36px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hb-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.6rem;
+            letter-spacing: 2px;
+            line-height: 1;
+            color: white;
+        }
+        .hb-logo em {
+            font-style: normal;
+            color: var(--teal);
+        }
+
+        .terminal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            background: var(--teal-dim);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 5px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--teal);
+        }
+        .terminal-badge .blink {
+            width: 6px; height: 6px;
+            background: var(--teal);
+            border-radius: 50%;
+            animation: blink 1.2s step-end infinite;
+            box-shadow: 0 0 6px var(--teal);
+        }
+        @keyframes blink {
+            0%,100% { opacity: 1; }
+            50%      { opacity: 0; }
+        }
+
+        /* ══ Alert ══ */
+        .alert-admin {
+            background: rgba(220,53,69,0.08);
+            border-left: 3px solid #e63946;
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #e63946;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ══ Field ══ */
+        .field {
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .field-lbl {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+        .field-lbl i { color: var(--teal); }
+
+        .field input {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #1e1e1e;
+            border-bottom: 2px solid #2a2a2a;
+            padding: 13px 40px 13px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s;
+            border-radius: 2px;
+            letter-spacing: 1px;
+        }
+        .field input::placeholder {
+            color: #2a2a2a;
+            font-weight: 400;
+            letter-spacing: 2px;
+        }
+        .field input:focus {
+            background: rgba(42,157,143,0.04);
+            border-color: var(--teal);
+            box-shadow: 0 0 0 1px rgba(42,157,143,0.2), 0 0 20px rgba(42,157,143,0.06);
+        }
+
+        /* Input right icon */
+        .field-icon {
+            position: absolute;
+            right: 14px;
+            bottom: 13px;
+            color: #2a2a2a;
+            font-size: 0.85rem;
+            pointer-events: none;
+            transition: color 0.3s;
+        }
+        .field:focus-within .field-icon { color: var(--teal); }
+
+        .field-err {
+            font-size: 0.68rem;
+            color: #e63946;
+            margin-top: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            display: block;
+        }
+
+        /* ══ Authorize button ══ */
+        .btn-authorize {
+            width: 100%;
+            padding: 16px;
+            background: var(--teal);
+            color: #000;
+            border: none;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            cursor: pointer;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .btn-authorize::before {
+            content: '';
+            position: absolute;
+            left: -100%; top: 0; bottom: 0;
+            width: 100%;
+            background: white;
+            transition: left 0.4s ease;
+            z-index: 0;
+        }
+        .btn-authorize:hover::before { left: 0; }
+        .btn-authorize:hover {
+            color: #000;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--teal-glow);
+        }
+        .btn-authorize span { position: relative; z-index: 1; }
+
+        /* ══ Footer ══ */
+        .card-footer-custom {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid #161616;
+            display: flex;
+            justify-content: center;
+        }
+        .back-link {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s;
+        }
+        .back-link:hover { color: var(--teal); }
+
+        /* System info row */
+        .sys-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #111;
+        }
+        .sys-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            color: #2a2a2a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .sys-item span { color: var(--teal); }
+    </style>
+</head>
+<body>
+
+    <!-- ── Scene ── -->
+    <div class="scene">
+        <div class="scene-photo"></div>
+        <div class="scene-scanlines"></div>
+        <div class="scene-grid"></div>
+        <div class="scene-glow"></div>
+
+        <!-- Corner brackets -->
+        <div class="corner corner--tl"></div>
+        <div class="corner corner--tr"></div>
+        <div class="corner corner--bl"></div>
+        <div class="corner corner--br"></div>
+
+        <!-- Floating images -->
+        <div class="float-img fi-1">
+            <img src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=400&q=80" alt="">
+        </div>
+        <div class="float-img fi-2">
+            <img src="https://images.unsplash.com/photo-1504813184591-01572f98c85f?w=300&q=80" alt="">
+        </div>
+        <div class="float-img fi-3">
+            <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80" alt="">
+        </div>
+        <div class="float-img fi-4">
+            <img src="https://images.unsplash.com/photo-1530026186672-2cd00ffc50fe?w=300&q=80" alt="">
+        </div>
+        <div class="float-img fi-5">
+            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&q=80" alt="">
+        </div>
+    </div>
+
+    <!-- ── Ticker ── -->
+    <div class="ticker-bar">
+        <div class="ticker-inner">
+            <span>⬡ HEALTHBRIDGE SECURE TERMINAL</span>
+            <span class="ticker-sep">///</span>
+            <span>ADMIN ACCESS ONLY</span>
+            <span class="ticker-sep">///</span>
+            <span>ALL SESSIONS MONITORED</span>
+            <span class="ticker-sep">///</span>
+            <span>PUNE HEALTH SYSTEMS v4.2</span>
+            <span class="ticker-sep">///</span>
+            <span>50+ HOSPITALS ONLINE</span>
+            <span class="ticker-sep">///</span>
+            <span>END-TO-END ENCRYPTED</span>
+            <span class="ticker-sep">///</span>
+            <!-- duplicate for seamless loop -->
+            <span>⬡ HEALTHBRIDGE SECURE TERMINAL</span>
+            <span class="ticker-sep">///</span>
+            <span>ADMIN ACCESS ONLY</span>
+            <span class="ticker-sep">///</span>
+            <span>ALL SESSIONS MONITORED</span>
+            <span class="ticker-sep">///</span>
+            <span>PUNE HEALTH SYSTEMS v4.2</span>
+            <span class="ticker-sep">///</span>
+            <span>50+ HOSPITALS ONLINE</span>
+            <span class="ticker-sep">///</span>
+            <span>END-TO-END ENCRYPTED</span>
+            <span class="ticker-sep">///</span>
+        </div>
+    </div>
+
+    <!-- ── Card ── -->
+    <div class="page-center">
+        <div class="admin-card">
+
+            <div class="card-brand">
+                <div class="hb-logo">PUNE<em>HEALTH</em></div>
+                <div class="terminal-badge">
+                    <span class="blink"></span>
+                    Secure Admin Terminal
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert-admin">
+                    <i class="bi bi-shield-exclamation"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" id="adminForm">
+                {% csrf_token %}
+
+                <div class="field">
+                    <label class="field-lbl">
+                        <i class="bi bi-person-badge-fill"></i>
+                        Administrator ID
+                    </label>
+                    <input type="text" name="email" placeholder="USERNAME" required autofocus>
+                    <i class="bi bi-chevron-right field-icon"></i>
+                </div>
+
+                <div class="field">
+                    <label class="field-lbl">
+                        <i class="bi bi-key-fill"></i>
+                        Access Key
+                    </label>
+                    <input type="password" name="password" placeholder="••••••••" required id="pwField">
+                    <i class="bi bi-lock field-icon" id="pwIcon" style="pointer-events:auto;cursor:pointer;"></i>
+                </div>
+
+                <button type="submit" class="btn-authorize" id="authBtn">
+                    <span id="authBtnText">
+                        Authorize Access &nbsp;<i class="bi bi-arrow-right"></i>
+                    </span>
+                </button>
+            </form>
+
+            <div class="card-footer-custom">
+                <a href="{% url 'index' %}" class="back-link">
+                    <i class="bi bi-arrow-left"></i> Exit to Public Site
+                </a>
+            </div>
+
+            <div class="sys-info">
+                <div class="sys-item">Node: <span>PNE-HQ-01</span></div>
+                <div class="sys-item">Proto: <span>TLS 1.3</span></div>
+                <div class="sys-item">Status: <span>ONLINE</span></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Password toggle via lock icon
+        const pwIcon = document.getElementById('pwIcon');
+        const pwField = document.getElementById('pwField');
+        pwIcon.addEventListener('click', function () {
+            const show = pwField.type === 'password';
+            pwField.type = show ? 'text' : 'password';
+            this.className = show ? 'bi bi-unlock field-icon' : 'bi bi-lock field-icon';
+            this.style.pointerEvents = 'auto';
+            this.style.cursor = 'pointer';
+            this.style.color = show ? '#2a9d8f' : '#2a2a2a';
+        });
+
+        // Submit animation
+        document.getElementById('adminForm').addEventListener('submit', function () {
+            const btn = document.getElementById('authBtn');
+            const txt = document.getElementById('authBtnText');
+            txt.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width:14px;height:14px;border-width:2px;"></span> Verifying Identity...';
+            btn.style.opacity = '0.75';
+            btn.style.pointerEvents = 'none';
+        });
+
+        // Typewriter clock in sys-info
+        function updateClock() {
+            const now = new Date();
+            const t = now.toTimeString().slice(0,8);
+            const el = document.querySelector('.sys-info');
+            if (el) {
+                const items = el.querySelectorAll('.sys-item span');
+                // optionally update third item with live time
+            }
+        }
+    </script>
+</body>
+</html>

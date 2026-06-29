@@ -1,0 +1,289 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Bed Logistics | HEALTHBRIDGE HQ{% endblock %}
+{% block page_title %}Bed Allocation Control{% endblock %}
+{% block nav_bookings %}active-block{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Arial Industrial Strategy */
+    body { font-family:  "source code pro", Arial, sans-serif; background-color: #f8f9fa; }
+    
+    .fw-black { font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
+
+    /* --- Terminal Filter Bar --- */
+    .terminal-filter {
+        background: #000;
+        padding: 15px 25px;
+        border-bottom: 4px solid #2a9d8f;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .filter-label {
+        font-size: 0.65rem;
+        font-weight: 900;
+        color: #2a9d8f;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-right: 15px;
+    }
+
+    .btn-terminal {
+        font-size: 0.7rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 8px 18px;
+        border-radius: 0;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: rgba(255,255,255,0.6);
+        transition: 0.3s;
+        text-decoration: none;
+    }
+
+    .btn-terminal:hover { background: rgba(42, 157, 143, 0.1); color: #2a9d8f; }
+    .btn-terminal.active { background: #2a9d8f; color: #fff; border-color: #2a9d8f; }
+
+    /* --- Data Grid --- */
+    .admin-inventory-grid {
+        background: #fff;
+        border: 1px solid #eee;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+    }
+
+    .table-head-terminal th {
+        background: #000;
+        color: #fff;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        padding: 18px 20px;
+        border: none;
+    }
+
+    .table tbody td {
+        padding: 18px 20px;
+        font-size: 0.85rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    /* Industrial Status Badges */
+    .badge-industrial {
+        border-radius: 0;
+        padding: 6px 12px;
+        font-size: 0.65rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .bg-approved-teal { background: #2a9d8f; color: #fff; }
+    .bg-pending-yellow { background: #f1c40f; color: #000; }
+    .bg-cancelled-red { background: #e63946; color: #fff; }
+
+    /* --- Action Button --- */
+    .btn-edit-terminal {
+        background: #000;
+        color: #fff;
+        width: 35px; height: 35px;
+        display: inline-flex;
+        align-items: center; justify-content: center;
+        border: none;
+        transition: 0.3s;
+    }
+    .btn-edit-terminal:hover { background: #2a9d8f; transform: scale(1.1); }
+
+    /* --- Inspection Modal --- */
+    .modal-industrial { border-radius: 0; border: none; }
+    .modal-header-noir { background: #000; color: #fff; border-radius: 0; }
+    .modal-header-noir .btn-close { filter: invert(1); }
+
+    .inspection-box {
+        background: #fcfdfe;
+        border: 1px solid #eee;
+        padding: 20px;
+        height: 100%;
+    }
+
+    .inspection-label {
+        font-size: 0.6rem;
+        font-weight: 900;
+        color: #aaa;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Terminal Filter Bar -->
+<div class="terminal-filter shadow-sm" data-aos="fade-down">
+    <span class="filter-label">Logistics Filters</span>
+    <a href="{% url 'manage_bookings' %}" class="btn-terminal {% if not status_filter %}active{% endif %}">Master Log</a>
+    <a href="?status=Pending"   class="btn-terminal {% if status_filter == 'Pending' %}active{% endif %}">⏳ Pending</a>
+    <a href="?status=Approved"  class="btn-terminal {% if status_filter == 'Approved' %}active{% endif %}">✅ Approved</a>
+    <a href="?status=Cancelled" class="btn-terminal {% if status_filter == 'Cancelled' %}active{% endif %}">❌ Cancelled</a>
+    <span class="ms-auto fw-bold text-teal extra-small font-monospace">{{ bookings.count }} RECORDS RETRIEVED</span>
+</div>
+
+<!-- Main Inventory Grid -->
+<div class="admin-inventory-grid shadow-sm" data-aos="fade-up">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-head-terminal">
+                <tr>
+                    <th>Ref ID</th>
+                    <th>Patient Identification</th>
+                    <th>Account</th>
+                    <th>Facility</th>
+                    <th>Bed Unit</th>
+                    <th>Admission</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Control</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td><code class="fw-bold text-teal">#{{ booking.booking_id }}</code></td>
+                    <td>
+                        <div class="fw-black">{{ booking.patient_name|upper }}</div>
+                        <div class="text-muted extra-small fw-bold">{{ booking.patient_phone }}</div>
+                    </td>
+                    <td>
+                        {% if booking.user %}
+                        <div class="small fw-bold">{{ booking.user.username|upper }}</div>
+                        <div class="extra-small text-muted">{{ booking.user.email }}</div>
+                        {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td><span class="fw-bold small text-muted">{{ booking.hospital.name|upper }}</span></td>
+                    <td><span class="badge bg-light text-dark border fw-bold" style="font-size: 0.65rem;">{{ booking.bed_type|upper }}</span></td>
+                    <td><div class="fw-bold small">{{ booking.admission_date }}</div></td>
+                    <td>
+                        <div class="fw-black text-dark">₹{{ booking.amount_paid }}</div>
+                        <div class="extra-small text-muted fw-bold">{{ booking.payment_method|upper }}</div>
+                    </td>
+                    <td>
+                        <span class="badge-industrial badge 
+                            {% if booking.status == 'Approved' %}bg-approved-teal
+                            {% elif booking.status == 'Cancelled' %}bg-cancelled-red
+                            {% else %}bg-pending-yellow{% endif %}">
+                            {{ booking.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-edit-terminal" data-bs-toggle="modal" data-bs-target="#bookingModal{{ booking.id }}">
+                            <i class="bi bi-gear-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center py-5 text-muted fw-bold">DATABASE EMPTY: NO LOGS FOUND</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Inspection Modals (Logic Intact) -->
+{% for booking in bookings %}
+<div class="modal fade" id="bookingModal{{ booking.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modal-industrial">
+            <div class="modal-header modal-header-noir">
+                <h5 class="modal-title fw-black"><i class="bi bi-search me-2"></i>INSPECTION: {{ booking.booking_id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-5">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="inspection-box">
+                            <h6 class="filter-label mb-3">Patient Logistics</h6>
+                            <div class="mb-3">
+                                <span class="inspection-label">Legal Name</span>
+                                <span class="fw-bold d-block">{{ booking.patient_name }}</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="inspection-label">Age / Gender</span>
+                                <span class="fw-bold d-block">{{ booking.patient_age }} / {{ booking.patient_gender }}</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="inspection-label">Registered Address</span>
+                                <div class="small opacity-75 fw-bold">{{ booking.patient_address }}</div>
+                            </div>
+                            <div class="mb-0">
+                                <span class="inspection-label">Clinical Condition</span>
+                                <div class="small text-teal fw-bold">{{ booking.medical_condition }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="inspection-box">
+                            <h6 class="filter-label mb-3">Facility Allocation</h6>
+                            <div class="mb-3">
+                                <span class="inspection-label">Target Hospital</span>
+                                <span class="fw-bold d-block">{{ booking.hospital.name }}</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="inspection-label">Allocated Unit</span>
+                                <span class="fw-bold d-block">{{ booking.bed_type }} WARD [{{ booking.expected_days }} DAYS]</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="inspection-label">Security Liaison</span>
+                                <div class="small fw-bold">{{ booking.emergency_contact_name }} ({{ booking.emergency_contact_phone }})</div>
+                            </div>
+                            <div class="mb-0">
+                                <span class="inspection-label">Financial Clearance</span>
+                                <span class="text-success fw-bold">₹{{ booking.amount_paid }} PAID VIA {{ booking.payment_method }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Action Terminal -->
+                <form method="POST" action="{% url 'update_booking_status' booking.id %}">
+                    {% csrf_token %}
+                    <div class="row g-3 p-4 bg-light border">
+                        <div class="col-md-6">
+                            <label class="filter-label mb-2">Update Deployment Status</label>
+                            <select name="status" class="form-select rounded-0 border-dark shadow-none fw-bold">
+                                <option value="Pending"   {% if booking.status == 'Pending' %}selected{% endif %}>⏳ PENDING VERIFICATION</option>
+                                <option value="Approved"  {% if booking.status == 'Approved' %}selected{% endif %}>✅ ACCESS GRANTED</option>
+                                <option value="Cancelled" {% if booking.status == 'Cancelled' %}selected{% endif %}>❌ RECORD REVOKED</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="filter-label mb-2">Internal Admin Dispatch</label>
+                            <textarea name="admin_notes" class="form-control rounded-0 border-dark shadow-none" rows="2"
+                                      placeholder="Notes visible to patient...">{{ booking.admin_notes }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-dark w-100 rounded-0 py-3 fw-black">
+                                <i class="bi bi-shield-check me-2"></i>COMMIT STATUS CHANGE
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({ duration: 800, once: true });
+</script>
+{% endblock %}

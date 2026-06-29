@@ -1,0 +1,485 @@
+{% extends 'core/base.html' %}
+{% block title %}Booking Reference: {{ booking.booking_id }} | HEALTHBRIDGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family:  "source code pro", Arial, sans-serif;
+        background-color: #fcfdfe;
+        color: #264653;
+    }
+
+    /* --- Path Navigation --- */
+    .breadcrumb-item a {
+        color: #2a9d8f;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Command Status Banner --- */
+    .status-panel {
+        background: #ffffff;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+
+    .status-marker {
+        width: 12px;
+        height: 60px;
+        border-radius: 10px;
+    }
+
+    .marker-approved { background-color: #2a9d8f; }
+    .marker-pending { background-color: #f1c40f; }
+    .marker-cancelled { background-color: #e74c3c; }
+    .marker-completed { background-color: #000000; }
+
+    .status-text h4 {
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+    }
+
+    /* --- The Medical Voucher --- */
+    .voucher-card {
+        background: #ffffff;
+        border: 1px solid #eee;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+    }
+
+    .voucher-header {
+        background: #000000;
+        color: #ffffff;
+        padding: 25px 35px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .voucher-header h5 {
+        font-weight: 900;
+        margin: 0;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 1rem;
+    }
+
+    .ref-code {
+        font-family:  "source code pro", Arial, sans-serif;
+        color: #2a9d8f;
+        background: rgba(42, 157, 143, 0.15);
+        padding: 5px 12px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .voucher-body {
+        padding: 40px;
+    }
+
+    .data-group-title {
+        font-size: 0.7rem;
+        font-weight: 900;
+        color: #2a9d8f;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .label-text {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #999;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+
+    .value-text {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #000;
+        margin-bottom: 20px;
+    }
+
+    .meta-small {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    /* --- Action Buttons --- */
+    .btn-custom {
+        padding: 12px 25px;
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+    .btn-print { background: #fff; border: 2px solid #ddd; color: #555; }
+    .btn-print:hover { border-color: #000; color: #000; }
+
+    .btn-back { background: #fff; border: 2px solid #2a9d8f; color: #2a9d8f; }
+    .btn-back:hover { background: #2a9d8f; color: #fff; }
+
+    .btn-find { background: #000; border: none; color: #fff; }
+    .btn-find:hover { background: #2a9d8f; }
+
+    /* --- Download Button --- */
+    .btn-download {
+        background: #2a9d8f;
+        color: #fff;
+        border: none;
+    }
+    .btn-download:hover { background: #21867a; color: #fff; }
+    .btn-download:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    @media print {
+        .btn-custom, nav, footer, .breadcrumb { display: none !important; }
+        .voucher-card { box-shadow: none; border: 1px solid #000; }
+        .status-panel { border: 1px solid #000; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 900px;">
+    
+    <!-- Navigation Path -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'user_dashboard' %}">System</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'my_bookings' %}">Bookings</a></li>
+            <li class="breadcrumb-item active text-muted small fw-bold">{{ booking.booking_id }}</li>
+        </ol>
+    </nav>
+
+    <!-- Status Command Panel -->
+    <div class="status-panel mb-5">
+        <div class="status-marker 
+            {% if booking.status == 'Approved' %}marker-approved
+            {% elif booking.status == 'Cancelled' %}marker-cancelled
+            {% elif booking.status == 'Completed' %}marker-completed
+            {% else %}marker-pending{% endif %}">
+        </div>
+        <div class="status-text">
+            <h4>Booking Status: {{ booking.status|upper }}</h4>
+            <p class="text-muted mb-0 small">
+                {% if booking.status == 'Pending' %}Awaiting hospital verification. Please check back in a few minutes.{% endif %}
+                {% if booking.status == 'Approved' %}Confirmed. Please present this reference code at the hospital desk.{% endif %}
+                {% if booking.status == 'Cancelled' %}This booking request has been revoked.{% endif %}
+            </p>
+            {% if booking.admin_notes %}
+                <div class="mt-3 p-3 bg-light border-start border-3 border-teal small italic">
+                    <strong>Note from Hospital:</strong> {{ booking.admin_notes }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="ms-auto fs-1">
+            {% if booking.status == 'Approved' %}✅{% elif booking.status == 'Cancelled' %}❌{% else %}⏳{% endif %}
+        </div>
+    </div>
+
+    <!-- The Medical Voucher -->
+    <div class="voucher-card" id="voucher-card">
+        <div class="voucher-header">
+            <h5><i class="bi bi-shield-plus me-2"></i>Bed Allocation Voucher</h5>
+            <span class="ref-code">REF: {{ booking.booking_id }}</span>
+        </div>
+
+        <div class="voucher-body">
+            <div class="row g-5">
+                <!-- Entity Info -->
+                <div class="col-md-6 border-end pe-md-5">
+                    <span class="data-group-title">Facility Information</span>
+                    
+                    <div class="label-text">Medical Center</div>
+                    <div class="value-text">{{ booking.hospital.name }}</div>
+
+                    <div class="label-text">Address</div>
+                    <div class="meta-small">{{ booking.hospital.address }}</div>
+
+                    <div class="label-text">Contact</div>
+                    <div class="value-text">{{ booking.hospital.phone }}</div>
+
+                    <span class="data-group-title mt-4">Patient Profile</span>
+                    <div class="label-text">Full Name</div>
+                    <div class="value-text">{{ booking.patient_name }}</div>
+
+                    <div class="label-text">Demographics</div>
+                    <div class="value-text">Age: {{ booking.patient_age }} | {{ booking.patient_gender }}</div>
+                    
+                    <div class="label-text">Aadhaar / ID</div>
+                    <div class="value-text">{{ booking.aadhar_number|default:"Not Provided" }}</div>
+                </div>
+
+                <!-- Technical/Clinical Info -->
+                <div class="col-md-6 ps-md-5">
+                    <span class="data-group-title">Clinical Allocation</span>
+                    
+                    <div class="label-text">Assigned Bed Category</div>
+                    <div class="value-text">{{ booking.bed_type }} Ward</div>
+
+                    <div class="label-text">Admission Schedule</div>
+                    <div class="value-text text-teal">{{ booking.admission_date }}</div>
+
+                    <div class="label-text">Estimated Stay</div>
+                    <div class="value-text">{{ booking.expected_days }} Day(s)</div>
+
+                    <div class="label-text">Diagnosis / Condition</div>
+                    <div class="meta-small">{{ booking.medical_condition }}</div>
+
+                    <span class="data-group-title mt-4">Security & Contact</span>
+                    <div class="label-text">Emergency Liaison</div>
+                    <div class="value-text">{{ booking.emergency_contact_name }} ({{ booking.emergency_contact_relation }})</div>
+                    
+                    <div class="label-text">Liaison Contact</div>
+                    <div class="value-text">{{ booking.emergency_contact_phone }}</div>
+                </div>
+
+                <!-- Payment Block -->
+                <div class="col-12">
+                    <div class="p-4 bg-light border-top border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div>
+                            <span class="label-text">Transaction Status</span>
+                            <div class="mt-1"><span class="badge bg-success px-3 py-2 text-uppercase">{{ booking.payment_status }}</span></div>
+                        </div>
+                        <div>
+                            <span class="label-text">Registration Fee</span>
+                            <div class="value-text mb-0">₹{{ booking.amount_paid }} <small class="text-muted">via {{ booking.payment_method }}</small></div>
+                        </div>
+                        <div class="text-md-end">
+                            <span class="label-text">Date Booked</span>
+                            <div class="fw-bold small">{{ booking.created_at|date:"d M Y, H:i" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="d-flex flex-wrap gap-3 mt-5">
+        <button onclick="window.print()" class="btn btn-custom btn-print">
+            <i class="bi bi-printer me-2"></i>Print Voucher
+        </button>
+        <button onclick="downloadReceipt()" id="btn-download" class="btn btn-custom btn-download">
+            <i class="bi bi-download me-2"></i>Download Voucher
+        </button>
+        <a href="{% url 'my_bookings' %}" class="btn btn-custom btn-back">
+            <i class="bi bi-arrow-left me-2"></i>My Bookings
+        </a>
+        <a href="{% url 'search' %}" class="btn btn-custom btn-find ms-auto">
+            Find Another Hospital <i class="bi bi-chevron-right ms-2"></i>
+        </a>
+    </div>
+</div>
+
+<script>
+    // Dynamically load jsPDF then run callback — works regardless of base.html block support
+    function loadJsPDF(callback) {
+        if (window.jspdf && window.jspdf.jsPDF) {
+            callback(window.jspdf.jsPDF);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => {
+            if (window.jspdf && window.jspdf.jsPDF) {
+                callback(window.jspdf.jsPDF);
+            } else {
+                throw new Error('jsPDF loaded but window.jspdf.jsPDF is undefined');
+            }
+        };
+        script.onerror = () => { throw new Error('Failed to load jsPDF script'); };
+        document.head.appendChild(script);
+    }
+
+    function downloadReceipt() {
+        const btn = document.getElementById('btn-download');
+        const originalHTML = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Generating...';
+
+        try {
+            loadJsPDF(function(jsPDF) {
+
+                // ── DOM helpers ──────────────────────────────────────────
+                const g = (sel) => {
+                    const el = document.querySelector(sel);
+                    return el ? el.innerText.trim().replace(/\s+/g, ' ') : '—';
+                };
+                const all = (sel) => [...document.querySelectorAll(sel)].map(el => el.innerText.trim().replace(/\s+/g, ' '));
+
+                // ── Pull data from DOM ───────────────────────────────────
+                const bookingId   = g('.ref-code');          // "REF: BK-XXXX"
+                const status      = g('.status-text h4');
+                const labels      = all('.label-text');
+                const values      = all('.value-text, .meta-small');
+
+                // ── Init PDF ─────────────────────────────────────────────
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const W  = pdf.internal.pageSize.getWidth();   // 210
+                const H  = pdf.internal.pageSize.getHeight();  // 297
+                const M  = 18;
+                const RW = W - M * 2;
+                let y    = 0;
+
+                // ── Brand header ─────────────────────────────────────────
+                pdf.setFillColor(0, 0, 0);
+                pdf.rect(0, 0, W, 22, 'F');
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(13);
+                pdf.setTextColor(255, 255, 255);
+                pdf.text('HEALTHBRIDGE', M, 14);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(8);
+                pdf.setTextColor(160, 160, 160);
+                pdf.text('Bed Allocation Voucher', M, 19);
+                pdf.setFontSize(8);
+                pdf.setTextColor(42, 157, 143);
+                pdf.text(bookingId, W - M, 14, { align: 'right' });
+                y = 32;
+
+                // ── Status pill ──────────────────────────────────────────
+                const isApproved  = status.includes('APPROVED');
+                const isCancelled = status.includes('CANCELLED');
+                const fillR = isApproved ? 42  : isCancelled ? 231 : 241;
+                const fillG = isApproved ? 157 : isCancelled ? 76  : 196;
+                const fillB = isApproved ? 143 : isCancelled ? 60  : 15;
+                pdf.setFillColor(fillR, fillG, fillB);
+                pdf.roundedRect(M, y - 5, RW, 13, 3, 3, 'F');
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(9);
+                pdf.setTextColor(255, 255, 255);
+                pdf.text(status, W / 2, y + 3, { align: 'center' });
+                y += 16;
+
+                // ── Section renderer helper ──────────────────────────────
+                function sectionTitle(title, yPos) {
+                    pdf.setFillColor(241, 247, 246);
+                    pdf.rect(M, yPos, RW, 6, 'F');
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(7);
+                    pdf.setTextColor(42, 157, 143);
+                    pdf.text(title.toUpperCase(), M + 3, yPos + 4.2);
+                    return yPos + 10;
+                }
+
+                function field(label, value, xPos, yPos, colWidth) {
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setFontSize(7);
+                    pdf.setTextColor(150, 150, 150);
+                    pdf.text(label.toUpperCase(), xPos, yPos);
+                    yPos += 4;
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(0, 0, 0);
+                    const lines = pdf.splitTextToSize(value, colWidth);
+                    pdf.text(lines, xPos, yPos);
+                    return yPos + lines.length * 5 + 4;
+                }
+
+                // ── Two-column layout ─────────────────────────────────────
+                const colW = RW / 2 - 5;
+                const lx   = M;
+                const rx   = M + RW / 2 + 5;
+
+                // Facility Information
+                y = sectionTitle('Facility Information', y);
+                let ly = y, ry = y;
+                ly = field('Medical Center', g('.voucher-body .value-text'), lx, ly, colW);
+                ly = field('Address',        g('.meta-small'),               lx, ly, colW);
+                ly = field('Contact',        all('.value-text')[1] || '—',   lx, ly, colW);
+
+                // Patient Profile
+                ly = sectionTitle('Patient Profile', ly);
+                ly = field('Full Name',    all('.value-text')[2] || '—', lx, ly, colW);
+                ly = field('Demographics', all('.value-text')[3] || '—', lx, ly, colW);
+                ly = field('Aadhaar / ID', all('.value-text')[4] || '—', lx, ly, colW);
+
+                // Clinical Allocation (right column, starts at same y as Facility)
+                ry = y;
+                ry = sectionTitle('Clinical Allocation', ry);
+                ry = field('Bed Category',      all('.value-text')[5] || '—', rx, ry, colW);
+                ry = field('Admission Date',    all('.value-text')[6] || '—', rx, ry, colW);
+                ry = field('Estimated Stay',    all('.value-text')[7] || '—', rx, ry, colW);
+                ry = field('Diagnosis',         all('.meta-small')   || '—', rx, ry, colW);
+
+                ry = sectionTitle('Emergency Contact', ry);
+                ry = field('Liaison',  all('.value-text')[8] || '—', rx, ry, colW);
+                ry = field('Contact',  all('.value-text')[9] || '—', rx, ry, colW);
+
+                y = Math.max(ly, ry) + 4;
+
+                // ── Payment row ───────────────────────────────────────────
+                pdf.setDrawColor(220, 220, 220);
+                pdf.setLineWidth(0.3);
+                pdf.line(M, y, W - M, y);
+                y += 6;
+
+                pdf.setFillColor(248, 249, 250);
+                pdf.roundedRect(M, y, RW, 20, 3, 3, 'F');
+
+                const payStatus = g('.badge.bg-success');
+                const payAmount = g('.value-text.mb-0');
+                const payDate   = g('.fw-bold.small');
+
+                pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(150,150,150);
+                pdf.text('TRANSACTION STATUS', M + 5, y + 6);
+                pdf.setFont('helvetica', 'bold');   pdf.setFontSize(9); pdf.setTextColor(0,0,0);
+                pdf.text(payStatus, M + 5, y + 12);
+
+                pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(150,150,150);
+                pdf.text('REGISTRATION FEE', W / 2, y + 6, { align: 'center' });
+                pdf.setFont('helvetica', 'bold');   pdf.setFontSize(9); pdf.setTextColor(0,0,0);
+                pdf.text(payAmount, W / 2, y + 12, { align: 'center' });
+
+                pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(150,150,150);
+                pdf.text('DATE BOOKED', W - M - 5, y + 6, { align: 'right' });
+                pdf.setFont('helvetica', 'bold');   pdf.setFontSize(9); pdf.setTextColor(0,0,0);
+                pdf.text(payDate, W - M - 5, y + 12, { align: 'right' });
+                y += 28;
+
+                // ── Footer ────────────────────────────────────────────────
+                pdf.setFillColor(245, 245, 245);
+                pdf.rect(0, H - 12, W, 12, 'F');
+                pdf.setFont('helvetica', 'italic');
+                pdf.setFontSize(7);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text('Generated on ' + new Date().toLocaleString(), M, H - 4);
+                pdf.text('HEALTHBRIDGE.in', W - M, H - 4, { align: 'right' });
+
+                // ── Save ──────────────────────────────────────────────────
+                const refId = bookingId.replace('REF: ', '').trim() || 'voucher';
+                pdf.save('HEALTHBRIDGE_Voucher_' + refId + '.pdf');
+
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            });
+
+        } catch (err) {
+            console.error('Receipt download failed:', err);
+            alert('Could not generate PDF. Please use Print Voucher instead.');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    }
+</script>
+{% endblock %}

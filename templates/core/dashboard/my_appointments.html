@@ -1,0 +1,269 @@
+{% extends 'core/base.html' %}
+{% block title %}My Appointments | HEALTHBRIDGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family:  "source code pro", Arial, sans-serif;
+        background-color: #fcfdfe;
+        color: #264653;
+    }
+
+    /* --- Page Header --- */
+    .page-title {
+        font-weight: 900;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+    }
+
+    .breadcrumb-item a {
+        color: #2a9d8f;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    /* --- Clean Status Filters --- */
+    .filter-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 10px 20px;
+    }
+
+    .filter-pill {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: 0.3s;
+        border: 1px solid transparent;
+    }
+
+    .filter-pill.active { background: #000; color: #fff !important; }
+    .filter-pill:not(.active) { color: #888; background: #f8f9fa; }
+    .filter-pill:hover:not(.active) { background: #eee; }
+
+    /* --- Appointment List Cards --- */
+    .appointment-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 15px;
+        transition: 0.3s;
+        border-left: 6px solid #ddd;
+        overflow: hidden;
+    }
+
+    .appointment-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    /* Dynamic Border Colors based on Status */
+    .border-Approved { border-left-color: #2a9d8f !important; }
+    .border-Pending { border-left-color: #f1c40f !important; }
+    .border-Cancelled { border-left-color: #e63946 !important; }
+    .border-Completed { border-left-color: #000000 !important; }
+
+    .hosp-name {
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #000;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+
+    .meta-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #888;
+    }
+
+    .doctor-tag {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #2a9d8f;
+    }
+
+    .status-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        padding: 6px 12px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Action Buttons --- */
+    .btn-details {
+        background: #000;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.75rem;
+        padding: 10px 20px;
+        text-transform: uppercase;
+        transition: 0.3s;
+    }
+
+    .btn-details:hover {
+        background: #2a9d8f;
+        color: #fff;
+    }
+
+    .btn-new {
+        background: #2a9d8f;
+        color: #fff;
+        border-radius: 10px;
+        font-weight: bold;
+        padding: 12px 25px;
+        text-transform: uppercase;
+        border: none;
+    }
+
+    .btn-new:hover { background: #000; color: #fff; }
+
+    /* Admin Notes Styling */
+    .note-box {
+        background: #fafffe;
+        border: 1px solid rgba(42, 157, 143, 0.1);
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: #444;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <!-- Header & Actions -->
+  <div class="row align-items-center mb-5 g-4">
+    <div class="col-md-7">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item"><a href="{% url 'user_dashboard' %}">DASHBOARD</a></li>
+          <li class="breadcrumb-item active text-muted small fw-bold">SCHEDULE</li>
+        </ol>
+      </nav>
+      <h2 class="page-title">MY APPOINTMENTS<span>.</span></h2>
+    </div>
+    <div class="col-md-5 text-md-end">
+      <a href="{% url 'search' %}" class="btn btn-new shadow-sm">
+        <i class="bi bi-calendar-plus me-2"></i>New Appointment
+      </a>
+    </div>
+  </div>
+
+  <!-- Status Filter Bar -->
+  <div class="filter-card shadow-sm mb-4">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="fw-bold small text-muted text-uppercase me-2" style="font-size: 0.65rem; letter-spacing: 1px;">Filter By Status:</span>
+      <a href="{% url 'my_appointments' %}" class="filter-pill {% if not status_filter %}active{% endif %}">ALL</a>
+      <a href="?status=Pending" class="filter-pill {% if status_filter == 'Pending' %}active{% endif %}">⏳ Pending</a>
+      <a href="?status=Approved" class="filter-pill {% if status_filter == 'Approved' %}active{% endif %}">✅ Approved</a>
+      <a href="?status=Completed" class="filter-pill {% if status_filter == 'Completed' %}active{% endif %}">🏁 Completed</a>
+      <a href="?status=Cancelled" class="filter-pill {% if status_filter == 'Cancelled' %}active{% endif %}">❌ Cancelled</a>
+    </div>
+  </div>
+
+  <!-- Appointment List -->
+  {% if appointments %}
+  <div class="row g-4">
+    {% for a in appointments %}
+    <div class="col-12">
+      <div class="appointment-card shadow-sm border-{{ a.status }}">
+        <div class="card-body p-4">
+          <div class="row align-items-center g-4">
+            
+            <!-- Column 1: Hospital Details -->
+            <div class="col-md-4">
+              <div class="hosp-name">{{ a.hospital.name }}</div>
+              <div class="meta-text mb-2"><i class="bi bi-geo-alt-fill me-1"></i>{{ a.hospital.area|upper }}, PUNE</div>
+              {% if a.department %}
+              <span class="badge bg-light text-dark fw-bold border" style="font-size: 0.65rem;">{{ a.department.name|upper }}</span>
+              {% endif %}
+              <div class="mt-2"><code class="text-muted small">#{{ a.appointment_id }}</code></div>
+            </div>
+
+            <!-- Column 2: Clinical Details -->
+            <div class="col-md-5">
+              <div class="d-flex align-items-center gap-3">
+                <div class="doctor-info">
+                  {% if a.doctor %}
+                    <div class="doctor-tag"><i class="bi bi-person-fill me-1"></i>Dr. {{ a.doctor.name }}</div>
+                    {% if a.doctor.qualification %}
+                      <div class="text-muted extra-small fw-bold" style="font-size: 0.7rem;">{{ a.doctor.qualification }}</div>
+                    {% endif %}
+                  {% endif %}
+                  <div class="mt-2 fw-bold text-dark" style="font-size: 0.9rem;">
+                    <i class="bi bi-calendar3 me-2"></i>{{ a.appointment_date }}
+                  </div>
+                  <div class="fw-bold text-muted" style="font-size: 0.85rem;">
+                    <i class="bi bi-clock me-2"></i>{{ a.appointment_time }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 3: Status & CTA -->
+            <div class="col-md-3 text-md-end">
+              <div class="mb-3">
+                <span class="status-badge 
+                    {% if a.status == 'Approved' %}bg-success text-white
+                    {% elif a.status == 'Cancelled' %}bg-danger text-white
+                    {% elif a.status == 'Completed' %}bg-dark text-white
+                    {% else %}bg-warning text-dark{% endif %}">
+                    {{ a.status }}
+                </span>
+              </div>
+              <a href="{% url 'appointment_detail' a.id %}" class="btn btn-details">
+                Manage Booking <i class="bi bi-chevron-right ms-1"></i>
+              </a>
+            </div>
+
+            <!-- Admin Notes Row -->
+            {% if a.admin_notes %}
+            <div class="col-12 mt-0">
+                <div class="note-box">
+                    <i class="bi bi-info-circle-fill text-teal me-2"></i>
+                    <strong>HOSPITAL MESSAGE:</strong> {{ a.admin_notes }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Timestamp Footer -->
+            <div class="col-12 mt-0">
+              <div class="text-muted extra-small" style="font-size: 0.7rem; opacity: 0.6;">
+                TRANSACTION RECORDED: {{ a.created_at|date:"d M Y" }} AT {{ a.created_at|date:"H:i" }} &nbsp;|&nbsp; 
+                PAYMENT: ₹{{ a.amount_paid }} ({{ a.payment_method|upper }})
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="text-center py-5">
+    <div class="mb-4 display-1 text-light opacity-50"><i class="bi bi-calendar-x"></i></div>
+    <h4 class="fw-bold text-muted">No appointments found.</h4>
+    {% if status_filter %}<p class="text-muted">You don't have any {{ status_filter|lower }} records.</p>{% endif %}
+    <a href="{% url 'search' %}" class="btn btn-new mt-3 px-5">
+      Book Your First Appointment
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

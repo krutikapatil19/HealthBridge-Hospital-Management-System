@@ -1,0 +1,295 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Secure Payment | HEALTHBRIDGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family:  "source code pro", Arial, sans-serif;
+        background-color: #f8fbfb;
+        color: #264653;
+    }
+
+    /* --- Clean Progress Stepper --- */
+    .stepper-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 40px;
+        gap: 15px;
+    }
+
+    .step-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .step-num {
+        width: 30px; height: 30px;
+        border-radius: 50%;
+        background: #eee;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 0.8rem;
+        color: #aaa;
+    }
+
+    .step-box.active .step-num { background: #2a9d8f; color: #fff; }
+    .step-box.completed .step-num { background: #000; color: #fff; }
+
+    .step-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #aaa;
+    }
+
+    .step-box.active .step-label { color: #2a9d8f; }
+
+    /* --- Payment Card --- */
+    .checkout-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.04);
+    }
+
+    .checkout-header {
+        background: #000;
+        color: #fff;
+        padding: 25px 40px;
+    }
+
+    .checkout-header h5 {
+        margin: 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 1rem;
+    }
+
+    /* --- Summary Section --- */
+    .summary-box {
+        background: #fcfdfe;
+        border: 1px solid #f0f4f4;
+        border-radius: 12px;
+        padding: 30px;
+    }
+
+    .summary-title {
+        font-size: 0.75rem;
+        font-weight: 900;
+        color: #2a9d8f;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+    }
+
+    .summary-label { color: #888; font-weight: 600; }
+    .summary-value { color: #000; font-weight: 700; }
+
+    /* --- Payment Methods --- */
+    .method-card {
+        cursor: pointer;
+        border: 2px solid #eee;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: 0.3s;
+        height: 100%;
+        background: #fff;
+    }
+
+    .method-card:hover { border-color: #2a9d8f; background: #f8fbfb; }
+
+    .active-payment {
+        border-color: #2a9d8f !important;
+        background: rgba(42, 157, 143, 0.05) !important;
+        box-shadow: 0 10px 20px rgba(42, 157, 143, 0.1);
+    }
+
+    .method-icon { font-size: 1.8rem; margin-bottom: 10px; display: block; }
+    .method-name { font-weight: 800; font-size: 0.85rem; text-transform: uppercase; display: block; }
+
+    /* --- Pay Button --- */
+    .btn-pay-now {
+        background: #000;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 20px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: 0.3s;
+        width: 100%;
+    }
+
+    .btn-pay-now:hover {
+        background: #2a9d8f;
+        transform: translateY(-2px);
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 750px;">
+    
+    <!-- Progress Steps -->
+    <div class="stepper-container">
+        <div class="step-box completed">
+            <div class="step-num"><i class="bi bi-check"></i></div>
+            <div class="step-label">Details</div>
+        </div>
+        <div style="width: 40px; height: 2px; background: #eee;"></div>
+        <div class="step-box active">
+            <div class="step-num">2</div>
+            <div class="step-label">Payment</div>
+        </div>
+        <div style="width: 40px; height: 2px; background: #eee;"></div>
+        <div class="step-box">
+            <div class="step-num">3</div>
+            <div class="step-label">Done</div>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="checkout-card">
+        <div class="checkout-header">
+            <h5><i class="bi bi-shield-lock me-2"></i>Secure Checkout</h5>
+        </div>
+
+        <div class="p-4 p-md-5">
+            <!-- Order Summary -->
+            <div class="summary-box mb-5">
+                <span class="summary-title">Booking Summary</span>
+                
+                <div class="summary-item">
+                    <span class="summary-label">Patient Name</span>
+                    <span class="summary-value">{{ patient_name }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Medical Center</span>
+                    <span class="summary-value">{{ booking.hospital.name }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Service Type</span>
+                    <span class="summary-value">
+                        {% if booking_type == 'bed' %}
+                            Bed Allocation
+                        {% else %}
+                            Doctor Appointment
+                        {% endif %}
+                    </span>
+                </div>
+
+                {% if booking_type == 'bed' %}
+                    <div class="summary-item">
+                        <span class="summary-label">Admission Date</span>
+                        <span class="summary-value">{{ booking.admission_date }}</span>
+                    </div>
+                {% else %}
+                    <div class="summary-item">
+                        <span class="summary-label">Schedule Date</span>
+                        <span class="summary-value">{{ booking.appointment_date }}</span>
+                    </div>
+                {% endif %}
+
+                <hr style="border-top: 2px dashed #eee; margin: 20px 0;">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-uppercase small text-muted">Total Payable Amount</span>
+                    <span class="fs-3 fw-bold text-dark">₹{{ amount }}</span>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <form method="POST" id="paymentForm">
+                {% csrf_token %}
+                <span class="summary-title mb-3">Select Payment Method</span>
+
+                <div class="row g-3 mb-5">
+                    <div class="col-6 col-md-3">
+                        <label class="payment-option w-100 h-100">
+                            <input type="radio" name="payment_method" value="UPI" checked hidden>
+                            <div class="method-card active-payment">
+                                <span class="method-icon">📱</span>
+                                <span class="method-name">UPI</span>
+                                <small class="text-muted extra-small">GPay/Paytm</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="payment-option w-100 h-100">
+                            <input type="radio" name="payment_method" value="Card" hidden>
+                            <div class="method-card">
+                                <span class="method-icon">💳</span>
+                                <span class="method-name">Card</span>
+                                <small class="text-muted extra-small">Debit/Credit</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="payment-option w-100 h-100">
+                            <input type="radio" name="payment_method" value="NetBanking" hidden>
+                            <div class="method-card">
+                                <span class="method-icon">🏦</span>
+                                <span class="method-name">Bank</span>
+                                <small class="text-muted extra-small">Net Banking</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="payment-option w-100 h-100">
+                            <input type="radio" name="payment_method" value="Cash" hidden>
+                            <div class="method-card">
+                                <span class="method-icon">💵</span>
+                                <span class="method-name">Cash</span>
+                                <small class="text-muted extra-small">At Desk</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Demo Warning -->
+                <div class="p-3 rounded-3 mb-4 d-flex gap-3 align-items-center" style="background: rgba(42, 157, 143, 0.05); border: 1px solid rgba(42, 157, 143, 0.2);">
+                    <i class="bi bi-info-circle-fill text-teal fs-4"></i>
+                    <p class="mb-0 small fw-bold text-teal">
+                        DEMO MODE: This is a secure simulation. Your booking will be processed immediately upon clicking the button.
+                    </p>
+                </div>
+
+                <button type="submit" class="btn-pay-now" id="payBtn">
+                    <i class="bi bi-shield-lock-fill me-2"></i>Pay Now — ₹{{ amount }}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Original logic for selecting cards
+document.querySelectorAll('.payment-option').forEach(label => {
+    label.addEventListener('click', function() {
+        document.querySelectorAll('.method-card').forEach(c => c.classList.remove('active-payment'));
+        this.querySelector('.method-card').classList.add('active-payment');
+    });
+});
+
+// Original logic for button state
+document.getElementById('paymentForm').addEventListener('submit', function() {
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing Securely...';
+});
+</script>
+{% endblock %}

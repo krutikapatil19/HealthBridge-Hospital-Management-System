@@ -1,0 +1,688 @@
+{% extends 'core/base.html' %}
+{% block title %}Search Hospitals | HEALTHBRIDGE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css"/>
+<style>
+    body { font-family:"Segoe UI",Arial,sans-serif; background:#fff; color:#000; }
+    h1,h2,h3,h4,h5,h6,.fw-black { font-weight:900; letter-spacing:-.5px; text-transform:uppercase; }
+
+    /* ── Search Bar ── */
+    .search-zone { background:#000; padding:28px 40px; margin-bottom:0; border-bottom:5px solid #2a9d8f; }
+    .form-input-clean {
+        background:#fff !important; border:2px solid #333 !important;
+        border-radius:0 !important; padding:11px 14px;
+        font-weight:700; color:#000 !important;
+    }
+    .form-input-clean:focus { border-color:#2a9d8f !important; box-shadow:none !important; }
+    .btn-teal-action {
+        background:#2a9d8f; color:#fff; border:none; border-radius:0;
+        font-weight:900; text-transform:uppercase; transition:.2s;
+    }
+    .btn-teal-action:hover { background:#fff; color:#000; }
+
+    /* ── My Location button ── */
+    .btn-locate {
+        background:#fff; color:#000; border:2px solid #fff; border-radius:0;
+        font-weight:900; font-size:.78rem; text-transform:uppercase;
+        transition:.2s; display:flex; align-items:center; gap:6px;
+        white-space:nowrap; padding:11px 16px; cursor:pointer; width:100%;
+        justify-content:center;
+    }
+    .btn-locate:hover  { background:#2a9d8f; border-color:#2a9d8f; color:#fff; }
+    .btn-locate.loading{ background:#888; border-color:#888; color:#fff; cursor:wait; }
+    .btn-locate.active { background:#2a9d8f; border-color:#2a9d8f; color:#fff; }
+
+    .radius-wrap { display:none; }
+    .radius-wrap.visible { display:block; }
+    .radius-select {
+        background:#222 !important; color:#fff !important;
+        border:2px solid #444 !important; border-radius:0 !important;
+        font-weight:800; font-size:.75rem; padding:11px 10px; width:100%;
+    }
+
+    /* ── Nearby banner ── */
+    #nearby-banner {
+        display:none; background:#2a9d8f; color:#fff;
+        padding:9px 40px; font-weight:800; font-size:.8rem;
+        text-transform:uppercase; align-items:center; gap:14px;
+        border-bottom:3px solid #207a6e;
+    }
+    #nearby-banner.visible { display:flex; }
+    #nearby-banner .clear-btn {
+        background:transparent; border:2px solid rgba(255,255,255,.5);
+        color:#fff; font-weight:900; font-size:.68rem;
+        text-transform:uppercase; padding:3px 11px; cursor:pointer;
+        border-radius:0; transition:.15s; margin-left:auto;
+    }
+    #nearby-banner .clear-btn:hover { background:rgba(255,255,255,.2); }
+
+    /* ── View Toggle ── */
+    .view-toggle { display:flex; gap:8px; align-items:center; }
+    .toggle-btn {
+        padding:8px 18px; font-weight:800; font-size:.78rem;
+        text-transform:uppercase; border:2px solid #000; background:#fff;
+        cursor:pointer; transition:.2s;
+    }
+    .toggle-btn.active,.toggle-btn:hover { background:#000; color:#fff; }
+
+    /* ── Found text ── */
+    .found-text { font-size:.85rem; font-weight:800; color:#888; margin-bottom:24px; }
+    .found-text span { color:#2a9d8f; }
+
+    /* ── Hospital Card ── */
+    .hosp-card {
+        background:#fff; border:1px solid #eee; border-radius:0;
+        transition:transform .3s,border-color .3s;
+        height:100%; display:flex; flex-direction:column;
+    }
+    .hosp-card:hover { transform:translateY(-7px); border-color:#2a9d8f; box-shadow:0 20px 40px rgba(0,0,0,.07); }
+    .hosp-card.nearby-hidden { display:none; }
+
+    .hosp-img-box { position:relative; height:210px; background:#f4f4f4; overflow:hidden; flex-shrink:0; }
+    .hosp-img-box img { width:100%; height:100%; object-fit:cover; transition:transform .4s; }
+    .hosp-card:hover .hosp-img-box img { transform:scale(1.05); }
+    .hosp-img-placeholder {
+        width:100%; height:100%;
+        display:flex; align-items:center; justify-content:center;
+        background:linear-gradient(135deg,#f0f4ff,#e8f5e9);
+    }
+
+    .er-badge {
+        position:absolute; top:0; left:0;
+        background:#e63946; color:#fff; font-weight:900;
+        font-size:.68rem; padding:7px 14px; text-transform:uppercase;
+    }
+    .rating-pill {
+        position:absolute; top:0; right:0;
+        background:#000; color:#2a9d8f; padding:7px 12px;
+        font-weight:900; font-size:.75rem;
+    }
+    /* Distance badge overlaid on image */
+    .dist-badge {
+        position:absolute; bottom:0; left:0;
+        background:rgba(0,0,0,.78); color:#2a9d8f;
+        font-weight:900; font-size:.68rem;
+        padding:5px 12px; text-transform:uppercase; letter-spacing:.3px;
+        display:none;
+    }
+
+    .hosp-content { padding:22px; flex-grow:1; display:flex; flex-direction:column; }
+    .hosp-name { font-size:1.15rem; margin-bottom:4px; line-height:1.2; }
+    .hosp-loc { font-size:.72rem; font-weight:900; color:#2a9d8f; margin-bottom:16px; }
+
+    .bed-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+    .bed-item { border:1px solid #f0f0f0; padding:12px; text-align:center; }
+    .bed-val { display:block; font-size:1.7rem; font-weight:900; line-height:1; }
+    .bed-lbl { font-size:.6rem; font-weight:800; color:#aaa; text-transform:uppercase; margin-top:4px; display:block; }
+    .val-good { color:#2a9d8f; }
+    .val-none { color:#ddd; }
+
+    .btn-details {
+        background:#000; color:#fff; border:none; border-radius:0;
+        padding:13px; font-weight:900; font-size:.78rem;
+        text-transform:uppercase; text-decoration:none;
+        text-align:center; transition:.25s; display:block; margin-top:auto;
+    }
+    .btn-details:hover { background:#2a9d8f; color:#fff; }
+
+    /* ── Map View ── */
+    #map-view { display:none; }
+    #map-container { height:580px; border:3px solid #000; position:relative; }
+    #hospital-map { width:100%; height:100%; }
+
+    .leaflet-popup-content { font-family:"Segoe UI",sans-serif; min-width:230px; }
+    .popup-name { font-weight:900; font-size:.95rem; text-transform:uppercase; margin-bottom:4px; }
+    .popup-area { font-size:.72rem; color:#2a9d8f; font-weight:800; margin-bottom:8px; }
+    .popup-beds { display:flex; gap:10px; margin-bottom:10px; }
+    .popup-bed-box { flex:1; background:#f5f5f5; padding:8px; text-align:center; }
+    .popup-bed-num { font-size:1.3rem; font-weight:900; color:#2a9d8f; display:block; }
+    .popup-bed-lbl { font-size:.6rem; color:#999; text-transform:uppercase; font-weight:700; }
+    .popup-link {
+        display:block; background:#000; color:#fff; text-align:center;
+        padding:8px; font-weight:900; font-size:.75rem;
+        text-transform:uppercase; text-decoration:none;
+    }
+    .popup-link:hover { background:#2a9d8f; color:#fff; }
+    .popup-img { width:100%; height:100px; object-fit:cover; margin-bottom:8px; }
+    .popup-dist { font-size:.72rem; font-weight:900; color:#2a9d8f; margin-bottom:6px; }
+
+    /* Map sidebar */
+    #map-sidebar {
+        position:absolute; top:0; right:0; width:270px; height:100%;
+        background:#fff; border-left:2px solid #000;
+        overflow-y:auto; z-index:1000;
+    }
+    .map-list-item { padding:13px 16px; border-bottom:1px solid #eee; cursor:pointer; transition:background .15s; }
+    .map-list-item:hover { background:#f0faf9; }
+    .map-list-item.active { background:#000; color:#fff; }
+    .map-list-item.active .map-list-area,.map-list-item.active .map-list-beds { color:#aaa !important; }
+    .map-list-name { font-weight:800; font-size:.82rem; text-transform:uppercase; margin-bottom:2px; }
+    .map-list-area { font-size:.68rem; color:#2a9d8f; font-weight:700; }
+    .map-list-beds { font-size:.68rem; margin-top:3px; color:#666; }
+    .map-list-dist { font-size:.68rem; font-weight:900; color:#2a9d8f; margin-top:2px; display:none; }
+    .map-list-dist.visible { display:block; }
+    .map-sidebar-header {
+        background:#000; color:#fff; padding:13px 16px;
+        font-weight:900; font-size:.8rem; text-transform:uppercase;
+        position:sticky; top:0; z-index:10;
+    }
+
+    /* User location pulse */
+    .user-loc-dot {
+        width:16px; height:16px; border-radius:50%;
+        background:#2a9d8f; border:3px solid #fff;
+        box-shadow:0 0 0 5px rgba(42,157,143,.35);
+        animation:pulse-loc 1.6s infinite;
+    }
+    @keyframes pulse-loc {
+        0%,100%{ box-shadow:0 0 0 5px rgba(42,157,143,.35); }
+        50%    { box-shadow:0 0 0 13px rgba(42,157,143,.08); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- ── Search Bar ── -->
+    <div class="search-zone" data-aos="fade-down">
+        <form action="{% url 'search' %}" method="GET" id="searchForm">
+            <div class="row g-2 align-items-stretch">
+                <div class="col-lg-4">
+                    <input type="text" name="q" class="form-control form-input-clean h-100"
+                           placeholder="HOSPITAL NAME..." value="{{ query }}">
+                </div>
+                <div class="col-lg-2">
+                    <select name="area" class="form-select form-input-clean h-100">
+                        <option value="">ALL REGIONS</option>
+                        {% for a in areas %}
+                        <option value="{{ a }}" {% if a == area %}selected{% endif %}>{{ a|upper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2">
+                    <select name="bed_type" class="form-select form-input-clean h-100">
+                        <option value="">ALL BED TYPES</option>
+                        <option value="available" {% if bed_type == 'available' %}selected{% endif %}>VACANT BEDS</option>
+                        <option value="icu" {% if bed_type == 'icu' %}selected{% endif %}>ICU PRIORITY</option>
+                    </select>
+                </div>
+                <!-- Radius (shown only when location active) -->
+                <div class="col-lg-1 radius-wrap" id="radiusWrap">
+                    <select class="radius-select" id="radiusSelect" onchange="applyNearby()">
+                        <option value="3">3 KM</option>
+                        <option value="5" selected>5 KM</option>
+                        <option value="10">10 KM</option>
+                        <option value="20">20 KM</option>
+                    </select>
+                </div>
+                <div class="col-lg-2">
+                    <button type="button" class="btn-locate" id="btnLocate" onclick="getMyLocation()">
+                        <i class="bi bi-geo-alt-fill" id="locIcon"></i>
+                        <span id="locText">MY LOCATION</span>
+                    </button>
+                </div>
+                <div class="col-lg-1">
+                    <button type="submit" class="btn btn-teal-action w-100 h-100 py-2">SEARCH</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── Nearby Active Banner ── -->
+    <div id="nearby-banner">
+        <i class="bi bi-geo-alt-fill me-1"></i>
+        <span id="nearby-text">SHOWING HOSPITALS WITHIN 5 KM OF YOUR LOCATION</span>
+        <button class="clear-btn" onclick="clearLocation()">✕ CLEAR</button>
+    </div>
+
+    <!-- ── Results header + view toggle ── -->
+    <div class="d-flex justify-content-between align-items-center my-4 flex-wrap gap-3">
+        <div class="found-text mb-0">
+            FOUND <span id="visibleCount">{{ total }}</span> HOSPITALS
+            {% if area %} IN <span>{{ area|upper }}</span>{% endif %}
+            {% if query %} MATCHING "<span>{{ query|upper }}</span>"{% endif %}
+            <span id="nearbyLabel" style="display:none;"> — <span class="nearby-label">SORTED BY DISTANCE</span></span>
+        </div>
+        <div class="view-toggle">
+            <button class="toggle-btn active" id="btnGrid" onclick="switchView('grid')">
+                <i class="bi bi-grid-3x3-gap me-1"></i> GRID
+            </button>
+            <button class="toggle-btn" id="btnMap" onclick="switchView('map')">
+                <i class="bi bi-map me-1"></i> MAP VIEW
+            </button>
+        </div>
+    </div>
+
+    {% if hospitals %}
+
+    <!-- ── GRID VIEW ── -->
+    <div id="grid-view">
+        <div class="row g-4" id="hospGrid">
+            {% for hospital in hospitals %}
+            <div class="col-md-6 col-lg-4 hosp-col"
+                 id="col-{{ hospital.id }}"
+                 data-id="{{ hospital.id }}"
+                 data-lat="{% if hospital.latitude %}{{ hospital.latitude }}{% else %}{% endif %}"
+                 data-lng="{% if hospital.longitude %}{{ hospital.longitude }}{% else %}{% endif %}"
+                 data-aos="fade-up">
+                <div class="hosp-card">
+                    <div class="hosp-img-box">
+                        {% if hospital.emergency %}
+                        <div class="er-badge"><i class="bi bi-alarm-fill me-1"></i>EMERGENCY</div>
+                        {% endif %}
+                        <div class="rating-pill"><i class="bi bi-star-fill me-1"></i>{{ hospital.rating }}</div>
+                        <div class="dist-badge" id="dist-{{ hospital.id }}"></div>
+
+                        {% if hospital.image %}
+                            <img src="{{ hospital.image.url }}" alt="{{ hospital.name }}" loading="lazy">
+                        {% elif hospital.image_url %}
+                            <img src="{{ hospital.image_url }}" alt="{{ hospital.name }}" loading="lazy"
+                                 onerror="this.parentElement.querySelector('.hosp-img-placeholder') && (this.style.display='none')">
+                        {% else %}
+                            <div class="hosp-img-placeholder">
+                                <i class="bi bi-hospital text-muted" style="font-size:60px;"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="hosp-content">
+                        <h5 class="hosp-name">{{ hospital.name }}</h5>
+                        <div class="hosp-loc"><i class="bi bi-geo-alt-fill me-1"></i>{{ hospital.area|upper }}, PUNE</div>
+
+                        <div class="bed-grid">
+                            <div class="bed-item">
+                                <span class="bed-val {% if hospital.available_beds > 0 %}val-good{% else %}val-none{% endif %}">
+                                    {{ hospital.available_beds }}
+                                </span>
+                                <span class="bed-lbl">GENERAL BEDS</span>
+                            </div>
+                            <div class="bed-item">
+                                <span class="bed-val {% if hospital.available_icu_beds > 0 %}val-good{% else %}val-none{% endif %}">
+                                    {{ hospital.available_icu_beds }}
+                                </span>
+                                <span class="bed-lbl">ICU BEDS</span>
+                            </div>
+                        </div>
+
+                        <p class="small text-muted mb-3"><i class="bi bi-telephone-fill me-1"></i>{{ hospital.phone }}</p>
+                        <a href="{% url 'hospital_detail' hospital.id %}" class="btn-details">VIEW FULL PROFILE →</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- No nearby results message -->
+        <div id="no-nearby-msg" style="display:none;" class="text-center py-5">
+            <h2 class="fw-black mb-3">NO HOSPITALS NEARBY</h2>
+            <p class="text-muted">No hospitals found within the selected radius. Try increasing the distance.</p>
+            <button onclick="clearLocation()" class="btn btn-teal-action px-5 py-3 mt-2">SHOW ALL HOSPITALS</button>
+        </div>
+    </div>
+
+    <!-- ── MAP VIEW ── -->
+    <div id="map-view">
+        <div id="map-container">
+            <div id="hospital-map"></div>
+            <div id="map-sidebar">
+                <div class="map-sidebar-header">
+                    <i class="bi bi-hospital me-1"></i>
+                    <span id="sidebarCount">{{ total }}</span> HOSPITALS
+                </div>
+                {% for hospital in hospitals %}
+                <div class="map-list-item" id="sidebar-{{ hospital.id }}"
+                     onclick="focusHospital({{ hospital.id }})">
+                    <div class="map-list-name">{{ hospital.name }}</div>
+                    <div class="map-list-area"><i class="bi bi-geo-alt me-1"></i>{{ hospital.area }}</div>
+                    <div class="map-list-beds">
+                        🛏 {{ hospital.available_beds }} beds &nbsp;|&nbsp; 🏥 {{ hospital.available_icu_beds }} ICU
+                    </div>
+                    <div class="map-list-dist" id="map-dist-{{ hospital.id }}"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="text-center py-5">
+        <h2 class="fw-black mb-3">NO RESULTS FOUND</h2>
+        <p class="text-muted">No hospitals match your search. Please try different filters.</p>
+        <a href="{% url 'search' %}" class="btn btn-teal-action px-5 py-3 mt-2">RESET SEARCH</a>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Hospital data for JS -->
+<script>
+const HOSPITALS_DATA = [
+    {% for h in hospitals %}
+    {
+        id: {{ h.id }},
+        name: "{{ h.name|escapejs }}",
+        area: "{{ h.area|escapejs }}",
+        phone: "{{ h.phone|escapejs }}",
+        address: "{{ h.address|escapejs }}",
+        available_beds: {{ h.available_beds }},
+        available_icu_beds: {{ h.available_icu_beds }},
+        rating: {{ h.rating }},
+        emergency: {{ h.emergency|yesno:"true,false" }},
+        lat: {% if h.latitude %}{{ h.latitude }}{% else %}null{% endif %},
+        lng: {% if h.longitude %}{{ h.longitude }}{% else %}null{% endif %},
+        image_url: "{% if h.image %}{{ h.image.url }}{% elif h.image_url %}{{ h.image_url }}{% endif %}",
+        detail_url: "{% url 'hospital_detail' h.id %}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({ duration:550, once:true });
+
+// ── State ─────────────────────────────────────────────────────
+let mapInitialized = false;
+let leafletMap     = null;
+let markersById    = {};
+let userMarker     = null;
+let userCircle     = null;
+let userLat        = null;
+let userLng        = null;
+
+// ── Haversine distance (km) ───────────────────────────────────
+function haversine(lat1, lng1, lat2, lng2) {
+    const R  = 6371;
+    const dL = (lat2 - lat1) * Math.PI / 180;
+    const dG = (lng2 - lng1) * Math.PI / 180;
+    const a  = Math.sin(dL/2)**2 +
+               Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dG/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function fmtDist(km) {
+    return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(1)} km`;
+}
+
+// ── My Location ───────────────────────────────────────────────
+function getMyLocation() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+    }
+    const btn  = document.getElementById('btnLocate');
+    const icon = document.getElementById('locIcon');
+    const txt  = document.getElementById('locText');
+
+    btn.classList.add('loading');
+    icon.className = 'bi bi-arrow-clockwise spin';
+    txt.textContent = 'LOCATING...';
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            userLat = pos.coords.latitude;
+            userLng = pos.coords.longitude;
+
+            btn.classList.remove('loading');
+            btn.classList.add('active');
+            icon.className = 'bi bi-geo-alt-fill';
+            txt.textContent = 'LOCATION ON';
+
+            // Show radius selector
+            document.getElementById('radiusWrap').classList.add('visible');
+            applyNearby();
+        },
+        err => {
+            btn.classList.remove('loading');
+            icon.className = 'bi bi-geo-alt-fill';
+            txt.textContent = 'MY LOCATION';
+            const msgs = {
+                1: 'Location access denied. Please allow location in your browser settings.',
+                2: 'Could not detect your location. Try again.',
+                3: 'Location request timed out. Try again.'
+            };
+            alert(msgs[err.code] || 'Location error.');
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+    );
+}
+
+// ── Apply nearby filter ───────────────────────────────────────
+function applyNearby() {
+    if (userLat === null) return;
+    const radius = parseFloat(document.getElementById('radiusSelect').value);
+
+    // Compute distances for all hospitals
+    const withDist = HOSPITALS_DATA.map(h => ({
+        ...h,
+        dist: (h.lat && h.lng) ? haversine(userLat, userLng, h.lat, h.lng) : Infinity
+    })).sort((a, b) => a.dist - b.dist);
+
+    // Show/hide grid cards, set distance badges
+    let visible = 0;
+    withDist.forEach(h => {
+        const col   = document.getElementById('col-' + h.id);
+        const badge = document.getElementById('dist-' + h.id);
+        const inRange = h.dist <= radius;
+
+        if (col) {
+            col.style.display = inRange ? '' : 'none';
+            if (inRange) {
+                visible++;
+                // Set distance badge on image
+                if (badge && h.dist !== Infinity) {
+                    badge.textContent = '📍 ' + fmtDist(h.dist) + ' AWAY';
+                    badge.style.display = 'block';
+                }
+                // Re-insert in order of distance
+                const grid = document.getElementById('hospGrid');
+                grid.appendChild(col);
+            } else {
+                if (badge) badge.style.display = 'none';
+            }
+        }
+
+        // Map sidebar distance labels
+        const mapDist = document.getElementById('map-dist-' + h.id);
+        if (mapDist) {
+            if (inRange && h.dist !== Infinity) {
+                mapDist.textContent = '📍 ' + fmtDist(h.dist);
+                mapDist.classList.add('visible');
+            } else {
+                mapDist.classList.remove('visible');
+            }
+        }
+    });
+
+    // Update counters
+    document.getElementById('visibleCount').textContent = visible;
+    document.getElementById('sidebarCount').textContent = visible;
+    document.getElementById('nearbyLabel').style.display = 'inline';
+
+    // Show/hide no-results message
+    document.getElementById('no-nearby-msg').style.display = visible === 0 ? 'block' : 'none';
+
+    // Show banner
+    const banner = document.getElementById('nearby-banner');
+    document.getElementById('nearby-text').textContent =
+        `SHOWING ${visible} HOSPITALS WITHIN ${radius} KM OF YOUR LOCATION`;
+    banner.classList.add('visible');
+
+    // Update map if open
+    if (mapInitialized) {
+        updateUserOnMap(radius);
+        // Re-sort sidebar items by distance
+        const sidebar = document.getElementById('map-sidebar').querySelector('.map-sidebar-header').parentNode;
+        withDist.filter(h => h.dist <= radius).forEach(h => {
+            const item = document.getElementById('sidebar-' + h.id);
+            if (item) sidebar.appendChild(item);
+        });
+    }
+}
+
+// ── Clear location filter ─────────────────────────────────────
+function clearLocation() {
+    userLat = userLng = null;
+
+    const btn  = document.getElementById('btnLocate');
+    btn.classList.remove('active','loading');
+    document.getElementById('locIcon').className = 'bi bi-geo-alt-fill';
+    document.getElementById('locText').textContent = 'MY LOCATION';
+
+    document.getElementById('radiusWrap').classList.remove('visible');
+    document.getElementById('nearby-banner').classList.remove('visible');
+    document.getElementById('nearbyLabel').style.display = 'none';
+    document.getElementById('no-nearby-msg').style.display = 'none';
+    document.getElementById('visibleCount').textContent = '{{ total }}';
+    document.getElementById('sidebarCount').textContent = '{{ total }}';
+
+    // Show all cards, remove distance badges
+    document.querySelectorAll('.hosp-col').forEach(col => col.style.display = '');
+    document.querySelectorAll('.dist-badge').forEach(b => b.style.display = 'none');
+    document.querySelectorAll('.map-list-dist').forEach(d => d.classList.remove('visible'));
+
+    // Remove user marker/circle from map
+    if (userMarker && leafletMap) { leafletMap.removeLayer(userMarker); userMarker = null; }
+    if (userCircle && leafletMap) { leafletMap.removeLayer(userCircle); userCircle = null; }
+}
+
+// ── View toggle ───────────────────────────────────────────────
+function switchView(view) {
+    const grid = document.getElementById('grid-view');
+    const mapV = document.getElementById('map-view');
+    if (view === 'map') {
+        grid.style.display = 'none';
+        mapV.style.display = 'block';
+        document.getElementById('btnGrid').classList.remove('active');
+        document.getElementById('btnMap').classList.add('active');
+        if (!mapInitialized) initMap();
+        else setTimeout(() => leafletMap.invalidateSize(), 100);
+    } else {
+        mapV.style.display = 'none';
+        grid.style.display = 'block';
+        document.getElementById('btnMap').classList.remove('active');
+        document.getElementById('btnGrid').classList.add('active');
+    }
+}
+
+// ── Leaflet Map ───────────────────────────────────────────────
+function makeIcon(color) {
+    return L.divIcon({
+        className:'',
+        html:`<div style="background:${color};width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>`,
+        iconSize:[30,30], iconAnchor:[15,30], popupAnchor:[0,-32]
+    });
+}
+
+function initMap() {
+    mapInitialized = true;
+    leafletMap = L.map('hospital-map', { zoomControl:true }).setView([18.5204,73.8567], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom:18
+    }).addTo(leafletMap);
+
+    const valid = HOSPITALS_DATA.filter(h => h.lat && h.lng);
+    valid.forEach(h => {
+        const color  = h.available_beds > 0 ? '#2a9d8f' : '#e63946';
+        const marker = L.marker([h.lat, h.lng], { icon:makeIcon(color) }).addTo(leafletMap);
+        const imgHtml = h.image_url
+            ? `<img src="${h.image_url}" class="popup-img" onerror="this.style.display='none'" loading="lazy">`
+            : '';
+
+        marker.bindPopup(`
+            <div>
+                ${imgHtml}
+                <div class="popup-name">${h.name}</div>
+                <div class="popup-area"><i class="bi bi-geo-alt-fill"></i> ${h.area}, Pune</div>
+                <div class="popup-dist" id="popup-dist-${h.id}" style="display:none"></div>
+                <div class="popup-beds">
+                    <div class="popup-bed-box">
+                        <span class="popup-bed-num" style="color:${h.available_beds>0?'#2a9d8f':'#ccc'}">${h.available_beds}</span>
+                        <span class="popup-bed-lbl">General Beds</span>
+                    </div>
+                    <div class="popup-bed-box">
+                        <span class="popup-bed-num" style="color:${h.available_icu_beds>0?'#2a9d8f':'#ccc'}">${h.available_icu_beds}</span>
+                        <span class="popup-bed-lbl">ICU Beds</span>
+                    </div>
+                </div>
+                <div style="font-size:.72rem;color:#666;margin-bottom:8px;">
+                    ☎ ${h.phone} &nbsp;|&nbsp; ⭐ ${h.rating}
+                    ${h.emergency?' &nbsp;|&nbsp; <span style="color:#e63946;font-weight:800;">🚨 EMERGENCY</span>':''}
+                </div>
+                <a href="${h.detail_url}" class="popup-link">VIEW FULL PROFILE →</a>
+            </div>`, { maxWidth:260 });
+
+        markersById[h.id] = marker;
+    });
+
+    if (valid.length > 0) {
+        leafletMap.fitBounds(valid.map(h=>[h.lat,h.lng]), { padding:[40,300] });
+    }
+
+    // If location already active, place user marker
+    if (userLat !== null) {
+        const radius = parseFloat(document.getElementById('radiusSelect').value || 5);
+        updateUserOnMap(radius);
+    }
+}
+
+function updateUserOnMap(radius) {
+    if (!leafletMap || userLat === null) return;
+
+    // Remove old
+    if (userMarker) leafletMap.removeLayer(userMarker);
+    if (userCircle) leafletMap.removeLayer(userCircle);
+
+    // Pulsing user marker
+    const userIcon = L.divIcon({
+        className:'',
+        html:`<div class="user-loc-dot"></div>`,
+        iconSize:[16,16], iconAnchor:[8,8]
+    });
+    userMarker = L.marker([userLat, userLng], { icon:userIcon, zIndexOffset:1000 })
+        .addTo(leafletMap)
+        .bindPopup('<div style="font-weight:900;font-size:.85rem;">📍 YOUR LOCATION</div>');
+
+    // Radius circle
+    userCircle = L.circle([userLat, userLng], {
+        radius: radius * 1000,
+        color:'#2a9d8f', weight:2, opacity:.7,
+        fillColor:'#2a9d8f', fillOpacity:.08
+    }).addTo(leafletMap);
+
+    // Fly to user
+    leafletMap.flyTo([userLat, userLng], 13, { duration:1.2 });
+
+    // Update popup distances for visible markers
+    HOSPITALS_DATA.forEach(h => {
+        if (!h.lat || !h.lng) return;
+        const dist = haversine(userLat, userLng, h.lat, h.lng);
+        const el   = document.getElementById('popup-dist-' + h.id);
+        if (el) {
+            el.textContent = '📍 ' + fmtDist(dist) + ' from you';
+            el.style.display = 'block';
+        }
+    });
+}
+
+function focusHospital(id) {
+    const marker = markersById[id];
+    if (!marker) return;
+    document.querySelectorAll('.map-list-item').forEach(el => el.classList.remove('active'));
+    const item = document.getElementById('sidebar-' + id);
+    if (item) { item.classList.add('active'); item.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+    leafletMap.setView(marker.getLatLng(), 15, { animate:true });
+    marker.openPopup();
+}
+
+document.getElementById('btnMap').addEventListener('click', () => {
+    setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 120);
+});
+</script>
+{% endblock %}

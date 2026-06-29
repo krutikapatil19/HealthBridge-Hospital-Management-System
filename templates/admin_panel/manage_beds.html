@@ -1,0 +1,235 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Bed Inventory Control | HEALTHBRIDGE HQ{% endblock %}
+{% block page_title %}Network Inventory Control{% endblock %}
+{% block nav_beds %}active-block{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Arial Industrial Strategy */
+    body { font-family:  "source code pro", Arial, sans-serif; background-color: #f8f9fa; }
+    
+    .fw-black { font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; }
+
+    /* --- Inventory Card --- */
+    .hq-card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 0; /* Sharp edges */
+        transition: 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hq-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        border-color: #2a9d8f;
+    }
+
+    .card-header-badass {
+        background: #000;
+        color: #fff;
+        padding: 20px;
+        border-radius: 0;
+    }
+
+    .card-header-badass h6 {
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .rating-terminal {
+        font-size: 0.7rem;
+        font-weight: 900;
+        color: #2a9d8f;
+        background: rgba(42, 157, 143, 0.15);
+        padding: 4px 8px;
+        border: 1px solid #2a9d8f;
+    }
+
+    /* --- Status Dashboard --- */
+    .stat-terminal-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
+        background: #eee;
+        border: 1px solid #eee;
+        margin-bottom: 25px;
+    }
+
+    .stat-cell {
+        background: #fff;
+        padding: 12px 5px;
+        text-align: center;
+    }
+
+    .stat-cell .val {
+        display: block;
+        font-size: 1.2rem;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+
+    .stat-cell .lbl {
+        font-size: 0.55rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #aaa;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Industrial Form Fields --- */
+    .form-label-badass {
+        font-size: 0.65rem;
+        font-weight: 900;
+        color: #777;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .input-terminal {
+        background: #fcfdfe !important;
+        border: 2px solid #f0f0f0 !important;
+        border-radius: 0 !important;
+        font-weight: 900;
+        font-size: 0.9rem;
+        color: #000 !important;
+        padding: 8px 12px;
+        transition: 0.2s;
+    }
+
+    .input-terminal:focus {
+        border-color: #2a9d8f !important;
+        background: #fff !important;
+        box-shadow: none;
+    }
+
+    .btn-update-badass {
+        background: #000;
+        color: #fff;
+        border: none;
+        border-radius: 0;
+        padding: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.75rem;
+        transition: 0.3s;
+        margin-top: 10px;
+    }
+
+    .btn-update-badass:hover {
+        background: #2a9d8f;
+        color: #fff;
+    }
+
+    .tiny-geo {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #2a9d8f;
+        text-transform: uppercase;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    {% for hospital in hospitals %}
+    <div class="col-md-6 col-xl-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:100 }}">
+        <div class="hq-card shadow-sm h-100">
+            <!-- Header -->
+            <div class="card-header-badass d-flex justify-content-between align-items-center">
+                <div class="overflow-hidden">
+                    <h6>{{ hospital.name }}</h6>
+                    <div class="tiny-geo mt-1"><i class="bi bi-geo-alt-fill"></i> {{ hospital.area|upper }}</div>
+                </div>
+                <div class="rating-terminal"><i class="bi bi-star-fill me-1"></i>{{ hospital.rating }}</div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Current Live Status HUD -->
+                <div class="stat-terminal-grid">
+                    <div class="stat-cell">
+                        <span class="val text-dark">{{ hospital.total_beds }}</span>
+                        <span class="lbl">TOTAL</span>
+                    </div>
+                    <div class="stat-cell">
+                        <span class="val {% if hospital.available_beds > 0 %}text-teal{% else %}text-danger{% endif %}">
+                            {{ hospital.available_beds }}
+                        </span>
+                        <span class="lbl">VACANT</span>
+                    </div>
+                    <div class="stat-cell">
+                        <span class="val text-dark opacity-50">{{ hospital.icu_beds }}</span>
+                        <span class="lbl">ICU TOT</span>
+                    </div>
+                    <div class="stat-cell">
+                        <span class="val {% if hospital.available_icu_beds > 0 %}text-primary{% else %}text-muted{% endif %}">
+                            {{ hospital.available_icu_beds }}
+                        </span>
+                        <span class="lbl">ICU VAC</span>
+                    </div>
+                </div>
+
+                <!-- Update Terminal Form -->
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="hospital_id" value="{{ hospital.id }}">
+                    
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label-badass">Network Capacity</label>
+                            <input type="number" name="total_beds" class="form-control input-terminal"
+                                   value="{{ hospital.total_beds }}" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-badass">Current Vacancy</label>
+                            <input type="number" name="available_beds" class="form-control input-terminal"
+                                   value="{{ hospital.available_beds }}" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-badass">ICU Core Units</label>
+                            <input type="number" name="icu_beds" class="form-control input-terminal"
+                                   value="{{ hospital.icu_beds }}" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-badass">ICU Avail.</label>
+                            <input type="number" name="available_icu_beds" class="form-control input-terminal"
+                                   value="{{ hospital.available_icu_beds }}" min="0">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-update-badass w-100">
+                                <i class="bi bi-shield-check me-2"></i>COMMIT INVENTORY UPDATE
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="display-1 text-light mb-4"><i class="bi bi-building-slash"></i></div>
+        <h2 class="fw-black">ZERO ENTITIES FOUND</h2>
+        <p class="text-muted fw-bold">Network database is empty. Please initialize Pune Hospital Registry.</p>
+        <div class="p-3 bg-dark text-teal d-inline-block font-monospace small">
+            python manage.py seed_pune_hospitals
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({ duration: 600, once: true });
+</script>
+{% endblock %}

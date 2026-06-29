@@ -1,0 +1,244 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Operational HQ - HEALTHBRIDGE{% endblock %}
+{% block page_title %}Operational Overview{% endblock %}
+{% block nav_dashboard %}active-block{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Admin Dashboard Specific Styles */
+    .stat-card-badass {
+        background: #fff;
+        border: 1px solid #eee;
+        border-bottom: 4px solid #000;
+        padding: 30px;
+        transition: 0.3s;
+    }
+    .stat-card-badass:hover {
+        border-bottom-color: #2a9d8f;
+        transform: translateY(-5px);
+    }
+    .stat-value {
+        font-size: 2.8rem;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 5px;
+        color: #000;
+    }
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #888;
+    }
+    .stat-icon-box {
+        width: 45px;
+        height: 45px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #2a9d8f;
+        font-size: 1.2rem;
+    }
+
+    /* Table & List Styling */
+    .admin-table-card {
+        background: #fff;
+        border: 1px solid #eee;
+    }
+    .table-head-dark th {
+        background: #000;
+        color: #fff;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 15px 20px;
+        border: none;
+    }
+    .table tbody td {
+        padding: 15px 20px;
+        vertical-align: middle;
+        font-size: 0.85rem;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .badge-industrial {
+        border-radius: 0;
+        padding: 6px 12px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .list-group-item-modern {
+        border: none;
+        border-bottom: 1px solid #f8f9fa;
+        padding: 15px 25px;
+        transition: 0.2s;
+    }
+    .list-group-item-modern:hover {
+        background: #fcfdfe;
+        padding-left: 30px;
+    }
+
+    .btn-manage-sm {
+        font-size: 0.7rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 0;
+        padding: 8px 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- High-Impact Stats Row -->
+<div class="row g-4 mb-5">
+    <div class="col-6 col-md-3">
+        <div class="stat-card-badass shadow-sm">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="stat-icon-box"><i class="bi bi-building"></i></div>
+                <div class="stat-label">Hospitals</div>
+            </div>
+            <div class="stat-value">{{ hospital_count }}</div>
+            <div class="text-muted extra-small fw-bold">PUNE CITY NETWORK</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card-badass shadow-sm" style="border-bottom-color: #2a9d8f;">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="stat-icon-box" style="color: #2a9d8f;"><i class="bi bi-bed"></i></div>
+                <div class="stat-label">Vacant Beds</div>
+            </div>
+            <div class="stat-value text-teal">{{ available_beds }}</div>
+            <div class="text-muted extra-small fw-bold">TOTAL CAPACITY: {{ total_beds }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card-badass shadow-sm">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="stat-icon-box" style="color: #f1c40f;"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-label">Active Cases</div>
+            </div>
+            <div class="stat-value">{{ occupied_beds }}</div>
+            <div class="text-danger extra-small fw-bold">PENDING APPROVAL: {{ pending_beds }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card-badass shadow-sm">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="stat-icon-box" style="color: #3498db;"><i class="bi bi-calendar-check"></i></div>
+                <div class="stat-label">Consultations</div>
+            </div>
+            <div class="stat-value">{{ total_appointments }}</div>
+            <div class="text-danger extra-small fw-bold">PENDING APTS: {{ pending_apts }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-5">
+    <!-- Hospital Inventory Table -->
+    <div class="col-lg-7">
+        <div class="admin-table-card shadow-sm">
+            <div class="p-4 d-flex justify-content-between align-items-center border-bottom">
+                <h6 class="fw-black m-0">Live Inventory Tracker</h6>
+                <a href="{% url 'manage_beds' %}" class="btn btn-dark btn-manage-sm">Network Config</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-head-dark">
+                        <tr>
+                            <th>Medical Facility</th>
+                            <th>District</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">Vacant</th>
+                            <th class="text-center">ICU</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in hospitals %}
+                        <tr>
+                            <td><span class="fw-bold">{{ h.name }}</span></td>
+                            <td><span class="text-muted fw-bold extra-small text-uppercase">{{ h.area }}</span></td>
+                            <td class="text-center fw-bold">{{ h.total_beds }}</td>
+                            <td class="text-center">
+                                <span class="badge-industrial badge {% if h.available_beds > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ h.available_beds }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge-industrial badge {% if h.available_icu_beds > 0 %}bg-dark{% else %}bg-secondary{% endif %}">
+                                    {{ h.available_icu_beds }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Sidebar -->
+    <div class="col-lg-5">
+        <!-- Bed Bookings -->
+        <div class="admin-table-card shadow-sm mb-4">
+            <div class="p-4 d-flex justify-content-between align-items-center border-bottom">
+                <h6 class="fw-black m-0">Inbound Bed Requests</h6>
+                <a href="{% url 'manage_bookings' %}" class="btn btn-outline-dark btn-manage-sm">Log</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for b in recent_bookings %}
+                <div class="list-group-item-modern">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold small">{{ b.patient_name|upper }}</span>
+                        <span class="badge-industrial badge 
+                            {% if b.status == 'Approved' %}bg-success
+                            {% elif b.status == 'Cancelled' %}bg-danger
+                            {% else %}bg-warning text-dark{% endif %}">
+                            {{ b.status }}
+                        </span>
+                    </div>
+                    <div class="text-muted extra-small fw-bold">{{ b.hospital.name }} &bull; #{{ b.booking_id }}</div>
+                </div>
+                {% empty %}
+                <div class="p-5 text-center text-muted fw-bold small">No pending bed logs</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Appointments -->
+        <div class="admin-table-card shadow-sm">
+            <div class="p-4 d-flex justify-content-between align-items-center border-bottom">
+                <h6 class="fw-black m-0">Medical Consultations</h6>
+                <a href="{% url 'manage_appointments' %}" class="btn btn-outline-dark btn-manage-sm">Schedule</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for a in recent_appointments %}
+                <div class="list-group-item-modern">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold small">{{ a.patient_name|upper }}</span>
+                        <span class="badge-industrial badge 
+                            {% if a.status == 'Approved' %}bg-success
+                            {% elif a.status == 'Completed' %}bg-dark
+                            {% elif a.status == 'Cancelled' %}bg-danger
+                            {% else %}bg-warning text-dark{% endif %}">
+                            {{ a.status }}
+                        </span>
+                    </div>
+                    <div class="text-muted extra-small fw-bold">
+                        {% if a.doctor %}DR. {{ a.doctor.name|upper }} | {% endif %}#{{ a.appointment_id }}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-5 text-center text-muted fw-bold small">No upcoming clinical sessions</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

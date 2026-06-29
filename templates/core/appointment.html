@@ -1,0 +1,830 @@
+{% extends 'core/base.html' %}
+{% block title %}Book Appointment - {{ hospital.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════════
+   COLOUR PALETTE
+   Primary Blue  : #2563eb
+   Teal          : #2a9d8f
+   Light Blue bg : #dbeafe / #eff6ff
+   Text dark     : #111827
+   Text mid      : #6b7280
+   White         : #ffffff
+   Card border   : #e5e7eb
+   Red accent    : #e63946
+   Green badge   : #16a34a
+═══════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing:border-box; }
+body { background:#f0f4ff; font-family:"Segoe UI",Arial,sans-serif; color:#111827; }
+
+/* ── Page header ──────────────────────────── */
+.appt-hero {
+    background:linear-gradient(135deg,#44474d 0%,#6eafb8 50%,#2a9d8f 100%);
+    padding:36px 0 28px;
+    color:#fff;
+    margin-bottom:0;
+}
+.appt-hero h2 { font-weight:900; font-size:1.7rem; letter-spacing:-.3px; margin-bottom:4px; }
+.appt-hero p  { opacity:.8; font-size:.95rem; margin:0; }
+
+/* Hospital pill in hero */
+.hosp-pill {
+    display:inline-flex; align-items:center; gap:10px;
+    background:rgba(255,255,255,.15);
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:50px; padding:8px 18px 8px 10px;
+    margin-top:14px;
+}
+.hosp-pill img, .hosp-pill .hosp-icon {
+    width:38px; height:38px; border-radius:50%;
+    object-fit:cover; background:rgba(255,255,255,.25);
+    display:flex; align-items:center; justify-content:center;
+}
+.hosp-pill-name { font-weight:700; font-size:.9rem; }
+.hosp-pill-sub  { font-size:.72rem; opacity:.75; }
+.rating-star { background:#16a34a; color:#fff; border-radius:4px; padding:2px 8px; font-weight:800; font-size:.72rem; }
+
+/* ── Symptom section ──────────────────────── */
+.symptom-section {
+    background:#fff;
+    border-radius:0 0 24px 24px;
+    padding:36px 0 40px;
+    box-shadow:0 4px 24px rgba(37,99,235,.07);
+    margin-bottom:32px;
+}
+.symptom-section h3 {
+    font-weight:900; font-size:1.5rem;
+    text-align:center; margin-bottom:8px; color:#111827;
+}
+.symptom-section .sub {
+    text-align:center; color:#6b7280; font-size:.9rem; margin-bottom:32px;
+}
+
+/* Symptom card */
+.symptom-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+    gap:18px;
+    padding:0 12px;
+}
+.symptom-card {
+    display:flex; flex-direction:column; align-items:center;
+    cursor:pointer; transition:transform .2s;
+    text-align:center;
+    padding:8px 4px;
+    border-radius:14px;
+    border:2px solid transparent;
+    background:transparent;
+}
+.symptom-card:hover { transform:translateY(-5px); }
+.symptom-card.active {
+    border-color:#2563eb;
+    background:#eff6ff;
+}
+.symptom-icon-wrap {
+    width:96px; height:96px; border-radius:50%;
+    background:#dbeafe;
+    display:flex; align-items:center; justify-content:center;
+    font-size:2.6rem; margin-bottom:12px;
+    transition:background .2s, box-shadow .2s;
+    box-shadow:0 2px 12px rgba(37,99,235,.08);
+}
+.symptom-card:hover .symptom-icon-wrap,
+.symptom-card.active .symptom-icon-wrap {
+    background:#bfdbfe;
+    box-shadow:0 6px 20px rgba(37,99,235,.18);
+}
+.symptom-name {
+    font-weight:700; font-size:.88rem; color:#111827; margin-bottom:2px; line-height:1.3;
+}
+.symptom-spec {
+    font-size:.72rem; color:#6b7280;
+}
+
+/* ── Doctor Results section ───────────────── */
+.results-section { padding-bottom:60px; }
+.results-header {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:12px; margin-bottom:20px;
+}
+.results-title { font-weight:900; font-size:1.2rem; color:#111827; }
+.results-count { font-size:.85rem; color:#6b7280; }
+
+.active-symptom-tag {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#dbeafe; color:#1e40af;
+    border-radius:50px; padding:5px 14px;
+    font-weight:700; font-size:.8rem;
+}
+.active-symptom-tag button {
+    background:none; border:none; color:#1e40af;
+    cursor:pointer; font-size:.9rem; padding:0; line-height:1;
+}
+
+/* Search bar */
+.doc-search-bar {
+    background:#fff; border:1px solid #e5e7eb;
+    border-radius:12px; padding:12px 18px;
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,.04);
+    flex-wrap:wrap;
+}
+.doc-search-bar input {
+    flex:1; border:none; outline:none;
+    font-size:.9rem; color:#374151; min-width:180px;
+    background:transparent;
+}
+.doc-search-bar .divider { width:1px; height:24px; background:#e5e7eb; }
+.doc-search-bar select {
+    border:none; outline:none; background:transparent;
+    font-size:.88rem; color:#374151; cursor:pointer;
+    min-width:170px;
+}
+
+/* Doctor card */
+.doctor-card {
+    background:#fff;
+    border:1.5px solid #e5e7eb;
+    border-radius:16px;
+    padding:20px 22px;
+    margin-bottom:14px;
+    display:flex; align-items:flex-start; gap:18px;
+    transition:transform .2s, box-shadow .2s, border-color .2s;
+    position:relative;
+    overflow:hidden;
+}
+.doctor-card::before {
+    content:'';
+    position:absolute; left:0; top:0; bottom:0;
+    width:4px;
+    background:linear-gradient(180deg,#2563eb,#2a9d8f);
+    border-radius:4px 0 0 4px;
+    opacity:0; transition:opacity .2s;
+}
+.doctor-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(37,99,235,.12); border-color:#bfdbfe; }
+.doctor-card:hover::before { opacity:1; }
+.doctor-card.selected { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+.doctor-card.selected::before { opacity:1; }
+
+/* Avatar */
+.doc-avatar {
+    width:80px; height:80px; border-radius:14px; flex-shrink:0;
+    background:linear-gradient(135deg,#dbeafe,#bfdbfe);
+    display:flex; align-items:center; justify-content:center;
+    font-size:2rem; color:#2563eb;
+    border:2px solid #e0eaff;
+    position:relative;
+}
+.doc-avatar-badge {
+    position:absolute; bottom:-6px; right:-6px;
+    background:#16a34a; color:#fff;
+    border-radius:6px; padding:2px 6px;
+    font-size:.6rem; font-weight:800;
+    border:2px solid #fff;
+    white-space:nowrap;
+}
+
+/* Info */
+.doc-info { flex:1; min-width:0; }
+.doc-name { font-weight:800; font-size:1rem; color:#111827; margin-bottom:2px; }
+.doc-specialty-tag {
+    display:inline-block;
+    background:#eff6ff; color:#2563eb;
+    border-radius:6px; padding:2px 10px;
+    font-size:.72rem; font-weight:700;
+    margin-bottom:6px;
+}
+.symptom-match-tag {
+    display:inline-block;
+    background:#f0fdf4; color:#16a34a;
+    border-radius:6px; padding:2px 10px;
+    font-size:.72rem; font-weight:700;
+    margin-bottom:6px; margin-left:4px;
+}
+.doc-hospital {
+    font-size:.8rem; color:#2a9d8f; font-weight:700; margin-bottom:5px;
+}
+.doc-hospital i { font-size:.75rem; }
+.doc-qual { font-size:.77rem; color:#6b7280; line-height:1.5; margin-bottom:5px; }
+.doc-exp  { font-size:.78rem; color:#374151; font-weight:600; margin-bottom:8px; }
+
+.doc-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.doc-rating {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#dcfce7; color:#16a34a;
+    border-radius:6px; padding:3px 9px;
+    font-weight:800; font-size:.75rem;
+}
+.doc-fee-label { font-size:.8rem; color:#6b7280; }
+.doc-fee-val   { font-size:.88rem; font-weight:800; color:#111827; }
+
+/* Book button */
+.btn-book {
+    background:linear-gradient(135deg,#71b4a9,#6e6e70);
+    color:#fff; border:none; border-radius:10px;
+    padding:11px 22px; font-weight:700; font-size:.85rem;
+    cursor:pointer; transition:all .2s;
+    white-space:nowrap; flex-shrink:0;
+    box-shadow:0 4px 14px rgba(37,99,235,.25);
+}
+.btn-book:hover {
+    background:linear-gradient(135deg,#1d4ed8,#1e3a8a);
+    box-shadow:0 6px 20px rgba(37,99,235,.35);
+    transform:translateY(-1px);
+}
+
+/* ── Empty / loading states ───────────────── */
+.state-placeholder {
+    text-align:center; padding:60px 20px; color:#9ca3af;
+}
+.state-placeholder .big-icon { font-size:64px; margin-bottom:16px; display:block; }
+.state-placeholder h5 { color:#374151; font-weight:700; margin-bottom:6px; }
+
+/* ══════════════════════════════════════════
+   MODAL — BULLETPROOF LAYOUT
+   Header + Footer always visible, Body scrolls
+   ══════════════════════════════════════════ */
+
+.modal-dialog {
+    margin: 10px auto !important;
+}
+
+.modal-content {
+    border-radius: 18px !important;
+    border: none !important;
+    /* Fill viewport minus small margin, use flex column */
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: calc(100vh - 20px) !important;
+    overflow: hidden !important;
+}
+
+/* Header — fixed height, never scrolls */
+.modal-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb) !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 18px 24px !important;
+    flex-shrink: 0 !important;  /* never compress */
+    border-radius: 18px 18px 0 0 !important;
+}
+.modal-header .btn-close { filter: brightness(0) invert(1); }
+
+/* Body — grows to fill available space, ONLY this scrolls */
+.modal-body {
+    flex: 1 1 auto !important;  /* grow + shrink freely */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 22px 24px !important;
+    background: #fff !important;
+    -webkit-overflow-scrolling: touch;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #bfdbfe #f0f4ff;
+}
+.modal-body::-webkit-scrollbar { width: 5px; }
+.modal-body::-webkit-scrollbar-track { background: #f0f4ff; }
+.modal-body::-webkit-scrollbar-thumb { background: #bfdbfe; border-radius: 10px; }
+
+/* Footer — fixed height, never scrolls, ALWAYS visible */
+.modal-footer {
+    flex-shrink: 0 !important;  /* never compress */
+    background: #f9fafb !important;
+    border-top: 1px solid #e5e7eb !important;
+    padding: 14px 24px !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 -3px 10px rgba(0,0,0,.06) !important;
+    display: flex !important;
+    gap: 10px !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+}
+
+.selected-doc-banner {
+    background:linear-gradient(135deg,#eff6ff,#dbeafe);
+    border:1.5px solid #bfdbfe; border-radius:14px;
+    padding:16px 18px; display:flex; align-items:center; gap:14px;
+    margin-bottom:22px;
+}
+.sdoc-avatar {
+    width:52px; height:52px; border-radius:12px;
+    background:linear-gradient(135deg,#dbeafe,#bfdbfe);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.5rem; color:#2563eb; flex-shrink:0;
+}
+.sdoc-name { font-weight:800; color:#1e40af; font-size:.95rem; }
+.sdoc-sub  { font-size:.78rem; color:#3b82f6; margin-top:1px; }
+.sdoc-hosp { font-size:.75rem; color:#2a9d8f; font-weight:700; margin-top:2px; }
+.sdoc-fee  { font-size:1.1rem; font-weight:900; color:#1e40af; }
+.sdoc-fee-label { font-size:.7rem; color:#3b82f6; }
+
+.form-label { font-weight:700; font-size:.83rem; color:#374151; margin-bottom:5px; }
+.form-control,.form-select {
+    border:1.5px solid #e5e7eb; border-radius:10px;
+    padding:10px 14px; font-size:.88rem; color:#111827;
+    transition:border-color .15s, box-shadow .15s;
+}
+.form-control:focus,.form-select:focus {
+    border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); outline:none;
+}
+.section-divider {
+    display:flex; align-items:center; gap:12px;
+    color:#9ca3af; font-size:.8rem; font-weight:700;
+    text-transform:uppercase; margin:20px 0 16px;
+}
+.section-divider::before,.section-divider::after {
+    content:''; flex:1; height:1px; background:#e5e7eb;
+}
+.btn-proceed {
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff; border:none; border-radius:10px;
+    padding:13px 28px; font-weight:700; font-size:.95rem;
+    width:100%; cursor:pointer; transition:all .2s;
+    box-shadow:0 4px 14px rgba(37,99,235,.25);
+}
+.btn-proceed:hover { box-shadow:0 6px 20px rgba(37,99,235,.35); transform:translateY(-1px); }
+
+/* Responsive */
+@media(max-width:576px) {
+    .doctor-card { flex-wrap:wrap; }
+    .btn-book { width:100%; margin-top:10px; }
+    .symptom-grid { grid-template-columns:repeat(3,1fr); gap:12px; }
+    .symptom-icon-wrap { width:72px; height:72px; font-size:1.9rem; }
+
+    /* On small screens give modal full height */
+    .modal-dialog {
+        max-height: calc(100vh - 16px) !important;
+        margin: 8px auto !important;
+    }
+    .modal-dialog-scrollable .modal-content {
+        max-height: calc(100vh - 16px) !important;
+    }
+    .modal-dialog-scrollable .modal-body {
+        max-height: calc(100vh - 16px - 80px - 72px) !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ─────────────────────────────────────────────────── -->
+<div class="appt-hero">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-2">
+            <ol class="breadcrumb" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5);--bs-breadcrumb-item-active-color:rgba(255,255,255,.8);">
+                <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-white-50 text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'search' %}" class="text-white-50 text-decoration-none">Hospitals</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'hospital_detail' hospital.id %}" class="text-white-50 text-decoration-none">{{ hospital.name }}</a></li>
+                <li class="breadcrumb-item active">Book Appointment</li>
+            </ol>
+        </nav>
+        <h2><i class="bi bi-calendar-heart me-2"></i>Book an Appointment</h2>
+        <p>Select your symptom and find the right specialist instantly</p>
+
+        <!-- Hospital pill -->
+        <div class="hosp-pill">
+            {% if hospital.image %}
+                <img src="{{ hospital.image.url }}" alt="{{ hospital.name }}">
+            {% elif hospital.image_url %}
+                <img src="{{ hospital.image_url }}" alt="{{ hospital.name }}"
+                     onerror="this.style.display='none'">
+            {% else %}
+                <div class="hosp-icon"><i class="bi bi-hospital text-white"></i></div>
+            {% endif %}
+            <div>
+                <div class="hosp-pill-name">{{ hospital.name }}</div>
+                <div class="hosp-pill-sub">{{ hospital.area }}, Pune &nbsp;·&nbsp;
+                    <span class="rating-star"><i class="bi bi-star-fill me-1" style="font-size:.6rem;"></i>{{ hospital.rating }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Symptom Cards ─────────────────────────────────────────── -->
+<div class="symptom-section">
+    <div class="container">
+        <h3>Most Common Symptoms</h3>
+        <p class="sub">Tap a symptom to find matched specialists at {{ hospital.name }}</p>
+
+        <div class="symptom-grid" id="symptomGrid">
+            <div class="symptom-card" data-symptom="Fever" data-dept="General Medicine" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🤒</div>
+                <div class="symptom-name">Fever</div>
+                <div class="symptom-spec">General Physician</div>
+            </div>
+            <div class="symptom-card" data-symptom="Gastric / Colic Pain" data-dept="Gastroenterology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">⚡</div>
+                <div class="symptom-name">Gastric / Colic Pain</div>
+                <div class="symptom-spec">Gastroenterologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Body Aches" data-dept="Orthopedics" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🦴</div>
+                <div class="symptom-name">Body Aches</div>
+                <div class="symptom-spec">Orthopedics</div>
+            </div>
+            <div class="symptom-card" data-symptom="Dust Allergy" data-dept="Dermatology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🤧</div>
+                <div class="symptom-name">Dust Allergy</div>
+                <div class="symptom-spec">Allergy Doctors</div>
+            </div>
+            <div class="symptom-card" data-symptom="Migraine" data-dept="Neurology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🧠</div>
+                <div class="symptom-name">Migraine</div>
+                <div class="symptom-spec">Neurologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Cough" data-dept="General Medicine" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">😷</div>
+                <div class="symptom-name">Cough</div>
+                <div class="symptom-spec">General Physician</div>
+            </div>
+            <div class="symptom-card" data-symptom="Skin Allergy" data-dept="Dermatology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🩹</div>
+                <div class="symptom-name">Skin Allergy</div>
+                <div class="symptom-spec">Dermatologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Eye Infections" data-dept="Ophthalmology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">👁️</div>
+                <div class="symptom-name">Eye Infections</div>
+                <div class="symptom-spec">Ophthalmologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Heart Issues" data-dept="Cardiology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">❤️</div>
+                <div class="symptom-name">Heart Issues</div>
+                <div class="symptom-spec">Cardiologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Ear / Throat" data-dept="ENT" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">👂</div>
+                <div class="symptom-name">Ear / Throat</div>
+                <div class="symptom-spec">ENT Specialists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Child Health" data-dept="Pediatrics" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">👶</div>
+                <div class="symptom-name">Child Health</div>
+                <div class="symptom-spec">Pediatricians</div>
+            </div>
+            <div class="symptom-card" data-symptom="Women's Health" data-dept="Gynecology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🌸</div>
+                <div class="symptom-name">Women's Health</div>
+                <div class="symptom-spec">Gynecologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Cancer Screening" data-dept="Oncology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🔬</div>
+                <div class="symptom-name">Cancer Screening</div>
+                <div class="symptom-spec">Oncologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Kidney Problems" data-dept="Urology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">💧</div>
+                <div class="symptom-name">Kidney / Urinary</div>
+                <div class="symptom-spec">Urologists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Mental Health" data-dept="Psychiatry" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🧘</div>
+                <div class="symptom-name">Mental Health</div>
+                <div class="symptom-spec">Psychiatrists</div>
+            </div>
+            <div class="symptom-card" data-symptom="Breathing Issues" data-dept="Pulmonology" onclick="selectSymptom(this)">
+                <div class="symptom-icon-wrap">🫁</div>
+                <div class="symptom-name">Breathing Issues</div>
+                <div class="symptom-spec">Pulmonologists</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Doctor Results ────────────────────────────────────────── -->
+<div class="results-section">
+    <div class="container">
+
+        <div class="results-header">
+            <div>
+                <div class="results-title" id="resultsTitle">All Doctors at {{ hospital.name }}</div>
+                <div class="results-count" id="resultsCount">{{ all_doctors|length }} doctors available</div>
+            </div>
+            <div id="activeSymptomTag" style="display:none;">
+                <span class="active-symptom-tag" id="symptomTagText">
+                    <i class="bi bi-funnel-fill"></i>
+                    <span id="symptomTagLabel"></span>
+                    <button onclick="clearSymptom()" title="Clear filter">✕</button>
+                </span>
+            </div>
+        </div>
+
+        <!-- Search bar -->
+        <div class="doc-search-bar">
+            <i class="bi bi-search text-primary"></i>
+            <input type="text" id="docSearchInput" placeholder="Search by doctor name..." oninput="filterDoctors()">
+            <div class="divider"></div>
+            <select id="deptFilter" onchange="filterDoctors()">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.name|lower }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Doctor list -->
+        <div id="doctorList">
+            {% for doctor in all_doctors %}
+            <div class="doctor-card"
+                 id="dc-{{ doctor.id }}"
+                 data-name="{{ doctor.name|lower }}"
+                 data-dept="{{ doctor.department.name|lower }}"
+                 data-dept-id="{{ doctor.department.id }}">
+
+                <div class="doc-avatar">
+                    <i class="bi bi-person-fill"></i>
+                    <span class="doc-avatar-badge">
+                        <i class="bi bi-star-fill" style="font-size:.5rem;"></i>
+                        4.{{ forloop.counter|stringformat:"d" |slice:"-1:" }}
+                    </span>
+                </div>
+
+                <div class="doc-info">
+                    <div class="doc-name">Dr. {{ doctor.name }}</div>
+                    <span class="doc-specialty-tag">{{ doctor.department.name }}</span>
+                    <span class="symptom-match-tag" id="match-{{ doctor.id }}" style="display:none;">
+                        ✓ Matches symptom
+                    </span>
+                    <div class="doc-hospital">
+                        <i class="bi bi-building-check"></i> {{ hospital.name }} &nbsp;·&nbsp; {{ hospital.area }}, Pune
+                    </div>
+                    <div class="doc-qual">{{ doctor.qualification }}</div>
+                    <div class="doc-exp"><i class="bi bi-briefcase-fill text-primary me-1" style="font-size:.7rem;"></i>{{ doctor.experience_years }} Years of Experience</div>
+                    <div class="doc-meta">
+                        <span class="doc-rating">
+                            <i class="bi bi-star-fill" style="font-size:.6rem;"></i>
+                            4.{{ forloop.counter|stringformat:"d" |slice:"-1:" }}
+                        </span>
+                        <span class="doc-fee-label">Consultation Fee:</span>
+                        <span class="doc-fee-val">₹ {{ doctor.consultation_fee }}</span>
+                    </div>
+                </div>
+
+                <button class="btn-book"
+                        onclick="openModal(
+                            {{ doctor.id }},
+                            'Dr. {{ doctor.name|escapejs }}',
+                            '{{ doctor.department.name|escapejs }}',
+                            '{{ doctor.qualification|escapejs }}',
+                            {{ doctor.consultation_fee }},
+                            {{ doctor.department.id }},
+                            '{{ hospital.name|escapejs }}'
+                        )">
+                    <i class="bi bi-calendar-check me-1"></i>Book Appointment
+                </button>
+            </div>
+            {% empty %}
+            <div class="state-placeholder">
+                <span class="big-icon">👨‍⚕️</span>
+                <h5>No doctors found</h5>
+                <p>This hospital has no doctors listed yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="noResultsMsg" style="display:none;" class="state-placeholder">
+            <span class="big-icon">🔍</span>
+            <h5>No doctors match</h5>
+            <p>Try a different symptom or clear the filter.</p>
+            <button onclick="clearSymptom()" class="btn btn-outline-primary mt-2">Show All Doctors</button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ══════════════ Booking Modal ══════════════ -->
+<div class="modal fade" id="bookModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- ① HEADER — fixed, never scrolls -->
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">
+                        <i class="bi bi-calendar-heart me-2"></i>Book Appointment
+                    </h5>
+                    <small style="opacity:.75;">Fill in your details to confirm</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- ② BODY — scrolls freely -->
+            <div class="modal-body">
+                <form method="POST" id="appointmentForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="department" id="hiddenDept">
+                    <input type="hidden" name="doctor"     id="hiddenDoctor">
+
+                    <!-- Selected doctor banner -->
+                    <div class="selected-doc-banner">
+                        <div class="sdoc-avatar"><i class="bi bi-person-fill"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="sdoc-name" id="mDocName"></div>
+                            <div class="sdoc-sub"  id="mDocSub"></div>
+                            <div class="sdoc-hosp" id="mDocHosp"></div>
+                        </div>
+                        <div class="text-end flex-shrink-0">
+                            <div class="sdoc-fee-label">Consultation Fee</div>
+                            <div class="sdoc-fee" id="mDocFee"></div>
+                        </div>
+                    </div>
+
+                    <!-- Date & Time -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label"><i class="bi bi-calendar3 text-primary me-1"></i>Appointment Date *</label>
+                            {{ form.appointment_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><i class="bi bi-clock text-primary me-1"></i>Preferred Time *</label>
+                            {{ form.appointment_time }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-chat-left-text text-primary me-1"></i>Reason for Visit *</label>
+                        {{ form.reason_for_visit }}
+                    </div>
+
+                    <div class="section-divider">Patient Details</div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label"><i class="bi bi-person text-primary me-1"></i>Full Name *</label>
+                            {{ form.patient_name }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Age *</label>
+                            {{ form.patient_age }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Gender *</label>
+                            {{ form.patient_gender }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><i class="bi bi-telephone text-primary me-1"></i>Phone Number *</label>
+                            {{ form.patient_phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><i class="bi bi-envelope text-primary me-1"></i>Email</label>
+                            {{ form.patient_email }}
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger mt-3 rounded-3">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        <strong>Please fix:</strong> {{ form.errors }}
+                    </div>
+                    {% endif %}
+
+                </form>
+            </div><!-- /modal-body -->
+
+            <!-- ③ FOOTER — fixed, never scrolls, always visible -->
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-outline-secondary rounded-3 px-4 py-2"
+                        style="font-weight:600;"
+                        data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <button type="submit"
+                        form="appointmentForm"
+                        class="btn-proceed">
+                    <i class="bi bi-arrow-right-circle me-2"></i>Proceed to Payment
+                </button>
+            </div>
+
+        </div><!-- /modal-content -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SYMPTOM_DEPT_MAP = {
+    'Fever':            'general medicine',
+    'Gastric / Colic Pain': 'gastroenterology',
+    'Body Aches':       'orthopedics',
+    'Dust Allergy':     'dermatology',
+    'Migraine':         'neurology',
+    'Cough':            'general medicine',
+    'Skin Allergy':     'dermatology',
+    'Eye Infections':   'ophthalmology',
+    'Heart Issues':     'cardiology',
+    'Ear / Throat':     'ent',
+    'Child Health':     'pediatrics',
+    "Women's Health":   'gynecology',
+    'Cancer Screening': 'oncology',
+    'Kidney / Urinary': 'urology',
+    'Mental Health':    'psychiatry',
+    'Breathing Issues': 'pulmonology',
+};
+
+let activeSymptom = null;
+let activeDept    = null;
+
+function selectSymptom(el) {
+    if (activeSymptom === el.dataset.symptom) { clearSymptom(); return; }
+    document.querySelectorAll('.symptom-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    activeSymptom = el.dataset.symptom;
+    activeDept    = SYMPTOM_DEPT_MAP[activeSymptom] || el.dataset.dept.toLowerCase();
+    document.getElementById('activeSymptomTag').style.display  = 'inline-flex';
+    document.getElementById('symptomTagLabel').textContent      = el.dataset.symptom;
+    document.getElementById('resultsTitle').textContent         = 'Doctors for ' + el.dataset.symptom;
+    document.getElementById('deptFilter').value = activeDept;
+    document.querySelectorAll('.symptom-match-tag').forEach(t => t.style.display = 'none');
+    filterDoctors();
+    document.getElementById('doctorList').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function clearSymptom() {
+    activeSymptom = null; activeDept = null;
+    document.querySelectorAll('.symptom-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('activeSymptomTag').style.display = 'none';
+    document.getElementById('resultsTitle').textContent = 'All Doctors at {{ hospital.name|escapejs }}';
+    document.getElementById('deptFilter').value = '';
+    document.querySelectorAll('.symptom-match-tag').forEach(t => t.style.display = 'none');
+    filterDoctors();
+}
+
+function filterDoctors() {
+    const nameQ = document.getElementById('docSearchInput').value.toLowerCase().trim();
+    const deptQ = document.getElementById('deptFilter').value.toLowerCase();
+    const cards = document.querySelectorAll('.doctor-card');
+    let shown = 0;
+
+    cards.forEach(card => {
+        const nameOk = !nameQ || card.dataset.name.includes(nameQ);
+        const deptOk = !deptQ || card.dataset.dept.includes(deptQ);
+        const show   = nameOk && deptOk;
+        card.style.display = show ? 'flex' : 'none';
+        if (show) {
+            shown++;
+            const mTag = card.querySelector('.symptom-match-tag');
+            if (mTag) mTag.style.display = (activeSymptom && deptOk) ? 'inline-block' : 'none';
+        }
+    });
+
+    if (deptQ) {
+        const list = document.getElementById('doctorList');
+        const matched   = [...cards].filter(c => c.dataset.dept.includes(deptQ) && c.style.display !== 'none');
+        const unmatched = [...cards].filter(c => !c.dataset.dept.includes(deptQ) && c.style.display !== 'none');
+        matched.forEach(c => list.appendChild(c));
+        unmatched.forEach(c => list.appendChild(c));
+    }
+
+    document.getElementById('resultsCount').textContent = shown + ' doctor' + (shown === 1 ? '' : 's') + ' available';
+    document.getElementById('noResultsMsg').style.display = shown === 0 ? 'block' : 'none';
+}
+
+function openModal(docId, docName, deptName, qual, fee, deptId, hospName) {
+    document.getElementById('hiddenDoctor').value   = docId;
+    document.getElementById('hiddenDept').value     = deptId;
+    document.getElementById('mDocName').textContent = docName;
+    document.getElementById('mDocSub').textContent  = deptName + ' · ' + qual;
+    document.getElementById('mDocHosp').textContent = '🏥 ' + hospName + ', Pune';
+    document.getElementById('mDocFee').textContent  = '₹ ' + fee;
+
+    document.querySelectorAll('.doctor-card').forEach(c => c.classList.remove('selected'));
+    const card = document.getElementById('dc-' + docId);
+    if (card) card.classList.add('selected');
+
+    // Scroll modal body back to top on open
+    const modalEl = document.getElementById('bookModal');
+    modalEl.addEventListener('shown.bs.modal', function onShown() {
+        const body = modalEl.querySelector('.modal-body');
+        if (body) body.scrollTop = 0;
+        modalEl.removeEventListener('shown.bs.modal', onShown);
+    }, { once: true });
+
+    new bootstrap.Modal(modalEl).show();
+}
+
+{% if form.errors %}
+window.addEventListener('DOMContentLoaded', function() {
+    const d = sessionStorage.getItem('lastApptDoc');
+    if (d) { const p=JSON.parse(d); openModal(p.id,p.name,p.dept,p.qual,p.fee,p.deptId,p.hosp); }
+});
+{% endif %}
+
+document.getElementById('appointmentForm').addEventListener('submit', function() {
+    sessionStorage.setItem('lastApptDoc', JSON.stringify({
+        id:     document.getElementById('hiddenDoctor').value,
+        deptId: document.getElementById('hiddenDept').value,
+        name:   document.getElementById('mDocName').textContent,
+        dept:   document.getElementById('mDocSub').textContent,
+        qual:   '',
+        fee:    document.getElementById('mDocFee').textContent.replace('₹ ',''),
+        hosp:   document.getElementById('mDocHosp').textContent.replace('🏥 ','').replace(', Pune',''),
+    }));
+});
+</script>
+{% endblock %}
