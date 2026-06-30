@@ -183,9 +183,6 @@ Features:
 ## 🏥 Home Interface
 ![Home](project_screenshots/HB_Home.jpeg)
 
-## 🏠 Landing Page
-![Landing](project_screenshots/HB_HomePage.jpeg)
-
 ## 🔐 Login Page
 ![Login](project_screenshots/LOginnnNew.jpeg)
 
