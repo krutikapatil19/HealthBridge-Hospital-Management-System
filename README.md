@@ -13,6 +13,24 @@ HealthBridge is a Django-based Digital Hospital Management System developed to s
 - Admin Dashboard
 - Booking Confirmation
 
+
+## 🛠 Technologies Used
+- Python
+- Django
+- SQLite
+- HTML
+- CSS
+- JavaScript
+
+## ⚙ Installation
+
+1. Clone the repository
+2. Create virtual environment
+3. Install requirements
+pip install -r requirements.txt
+4. Run server
+python manage.py runserver
+
 ---
 
 ## 🚀 Setup Instructions
