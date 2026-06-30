@@ -178,22 +178,37 @@ Features:
 ## 📸 Project Screenshots
 
 ### 🏠 Home Page
-![Home](screenshots/home.png)
+![Home](screenshots/HOMEPAGE.jpeg)
+
+### 🏥 Home Interface
+![Home Interface](screenshots/HB_Home.jpeg)
+
+### 🏥 Home Page (Alternative View)
+![Home Page](screenshots/HB_HomePage.jpeg)
 
 ### 🔐 Login Page
-![Login](screenshots/login.png)
+![Login](screenshots/LOginnnNew.jpeg)
 
 ### 📝 Registration Page
-![Register](screenshots/register.png)
+![Register](screenshots/HB_Register.jpeg)
 
 ### 🔍 Hospital Search
-![Hospital Search](screenshots/hospital-search.png)
+![Hospital Search](screenshots/hospitalSearch.jpeg)
+
+### 🏥 Hospital Details
+![Hospital Details](screenshots/HOspitalDetails.jpeg)
 
 ### 📅 Appointment Booking
-![Appointment Booking](screenshots/appointment-booking.png)
+![Appointment Booking](screenshots/AppointmentBooking.jpeg)
 
 ### 🛏️ Bed Booking
-![Bed Booking](screenshots/bed-booking.png)
+![Bed Booking](screenshots/BEDBookingPage.jpeg)
 
 ### 👤 User Dashboard
-![Dashboard](screenshots/dashboard.png)
+![User Dashboard](screenshots/UserDashboard.jpeg)
+
+### 📊 Admin Dashboard
+![Admin Dashboard](screenshots/HB_Dashboard.jpeg)
+
+### 📋 Booking Management
+![Booking Management](screenshots/BookingManagementPage.jpeg)
