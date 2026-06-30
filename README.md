@@ -174,3 +174,26 @@ Features:
 - Update bed/ICU availability per hospital
 - Approve / Cancel bed bookings
 - Approve / Cancel / Complete appointments
+
+## 📸 Project Screenshots
+
+### 🏠 Home Page
+![Home](screenshots/home.png)
+
+### 🔐 Login Page
+![Login](screenshots/login.png)
+
+### 📝 Registration Page
+![Register](screenshots/register.png)
+
+### 🔍 Hospital Search
+![Hospital Search](screenshots/hospital-search.png)
+
+### 📅 Appointment Booking
+![Appointment Booking](screenshots/appointment-booking.png)
+
+### 🛏️ Bed Booking
+![Bed Booking](screenshots/bed-booking.png)
+
+### 👤 User Dashboard
+![Dashboard](screenshots/dashboard.png)
