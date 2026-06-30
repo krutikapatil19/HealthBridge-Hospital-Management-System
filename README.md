@@ -175,40 +175,40 @@ Features:
 - Approve / Cancel bed bookings
 - Approve / Cancel / Complete appointments
 
-## 📸 Project Screenshots
+# 📸 Project Screenshots
 
-### 🏠 Home Page
-![Home](screenshots/HOMEPAGE.jpeg)
+## 🏠 Home Page
+![Home](project_screenshots/HOMEPAGE.jpeg)
 
-### 🏥 Home Interface
-![Home Interface](screenshots/HB_Home.jpeg)
+## 🏥 Home Interface
+![Home](project_screenshots/HB_Home.jpeg)
 
-### 🏥 Home Page (Alternative View)
-![Home Page](screenshots/HB_HomePage.jpeg)
+## 🏠 Landing Page
+![Landing](project_screenshots/HB_HomePage.jpeg)
 
-### 🔐 Login Page
-![Login](screenshots/LOginnnNew.jpeg)
+## 🔐 Login Page
+![Login](project_screenshots/LOginnnNew.jpeg)
 
-### 📝 Registration Page
-![Register](screenshots/HB_Register.jpeg)
+## 📝 Registration Page
+![Register](project_screenshots/HB_Register.jpeg)
 
-### 🔍 Hospital Search
-![Hospital Search](screenshots/hospitalSearch.jpeg)
+## 🔍 Hospital Search
+![Search](project_screenshots/hospitalSearch.jpeg)
 
-### 🏥 Hospital Details
-![Hospital Details](screenshots/HOspitalDetails.jpeg)
+## 🏥 Hospital Details
+![Hospital Details](project_screenshots/HOspitalDetails.jpeg)
 
-### 📅 Appointment Booking
-![Appointment Booking](screenshots/AppointmentBooking.jpeg)
+## 📅 Appointment Booking
+![Appointment Booking](project_screenshots/AppointmentBooking.jpeg)
 
-### 🛏️ Bed Booking
-![Bed Booking](screenshots/BEDBookingPage.jpeg)
+## 🛏️ Bed Booking
+![Bed Booking](project_screenshots/BEDBookingPage.jpeg)
 
-### 👤 User Dashboard
-![User Dashboard](screenshots/UserDashboard.jpeg)
+## 👤 User Dashboard
+![Dashboard](project_screenshots/UserDashboard.jpeg)
 
-### 📊 Admin Dashboard
-![Admin Dashboard](screenshots/HB_Dashboard.jpeg)
+## 🛠️ Admin Dashboard
+![Admin Dashboard](project_screenshots/HB_Dashboard.jpeg)
 
-### 📋 Booking Management
-![Booking Management](screenshots/BookingManagementPage.jpeg)
+## 📋 Booking Management
+![Booking Management](project_screenshots/BookingManagementPage.jpeg)
