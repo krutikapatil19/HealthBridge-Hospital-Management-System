@@ -4,6 +4,15 @@ A Django-based hospital bed booking system for Pune City hospitals.
 ## 📖 About the Project
 HealthBridge is a Django-based Digital Hospital Management System developed to simplify hospital services by providing online hospital search, bed booking, appointment scheduling, and healthcare administration through a centralized platform.
 
+## ✨ Features
+- Hospital Search
+- Online Appointment Booking
+- Hospital Bed Booking
+- User Registration & Login
+- Patient Dashboard
+- Admin Dashboard
+- Booking Confirmation
+
 ---
 
 ## 🚀 Setup Instructions
