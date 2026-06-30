@@ -31,6 +31,12 @@ pip install -r requirements.txt
 4. Run server
 python manage.py runserver
 
+## 🚀 Future Enhancements
+- Online Payment Gateway
+- AI-based Hospital Recommendation
+- Real-time Bed Availability
+- Email & SMS Notifications
+
 ---
 
 ## 🚀 Setup Instructions
